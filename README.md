@@ -9,6 +9,11 @@ Página só de leitura com o calendário geral da CCLX, para os líderes consult
 | `index.html` | A página (filtros, tema claro/escuro, lista por mês) |
 | `data.json` | As datas do calendário, exportadas da página de gestão |
 | `simbolo.png`, `simbolo-branco.png` | Símbolo da CCLX (tema claro e escuro) |
+| `Calendario-Geral-CCLX-2026-27.pdf` | Apresentação do calendário (23 slides): um slide por mês, prioridades, resumo do ano e por ministério |
+
+## Apresentação em PDF
+
+[Descarregar a apresentação (PDF)](Calendario-Geral-CCLX-2026-27.pdf). Na página publicada há também um botão "Apresentação (PDF)" no topo.
 
 ## Atualizar as datas
 

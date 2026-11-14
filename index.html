@@ -35,6 +35,10 @@ header.top img { height: 30px; width: auto }
 .corner { margin-left: auto; display: flex; align-items: center; gap: 12px; flex: none }
 .iconbtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--muted); padding: 0; cursor: pointer }
 .iconbtn svg { width: 18px; height: 18px }
+.pdf { display: inline-flex; align-items: center; gap: 7px; font: 600 13px var(--body); color: var(--ink); text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 13px 7px 10px; white-space: nowrap }
+.pdf svg { width: 16px; height: 16px }
+.pdf:hover { border-color: var(--ink) }
+.pdf:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
 .iconbtn:hover { color: var(--ink); border-color: var(--ink) }
 .online { display: flex; align-items: center }
 .online .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); margin-left: -8px; background: var(--chip); object-fit: cover }
@@ -124,7 +128,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
       <h1>Calendário Geral CCLX 2026/27</h1>
       <div class="sub">Consulta para líderes · <span id="upd">a carregar…</span></div>
     </div>
-    <div class="corner"><div class="online" id="online" hidden></div><button class="iconbtn" id="btnTheme" type="button"></button></div>
+    <div class="corner"><div class="online" id="online" hidden></div><a class="pdf" id="pdf" href="Calendario-Geral-CCLX-2026-27.pdf" download hidden title="Descarregar a apresentação do Calendário Geral CCLX 2026/27 (PDF)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Apresentação (PDF)</a><button class="iconbtn" id="btnTheme" type="button"></button></div>
   </header>
 </div>
 
@@ -397,6 +401,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
     const b = $("btnTheme"); b.innerHTML = ICON[modo]; b.title = MODO_TXT[modo] + ". Toque para mudar."; b.setAttribute("aria-label", MODO_TXT[modo] + ". Toque para mudar.");
   }
   applyTheme();
+  if (/(^|\.)github\.io$|(^|\.)cclx\.pt$/.test(location.hostname)) $("pdf").hidden = false;
   $("btnTheme").addEventListener("click", () => { modo = modo === "auto" ? "claro" : modo === "claro" ? "escuro" : "auto"; st.set("modo", modo); applyTheme(); });
 
   /* quem está online: avatares das contas Claude; convidados só em número */
