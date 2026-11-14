@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Consulta Calendário CCLX</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky filter bar over a single reading column of month sections; dates as a two-column ledger (date | event). */
+:root {
+  --bg: #ffffff; --surface: #f5f5f3; --line: #e6e5e1; --ink: #141414; --muted: #6b6a66; --soft: #9a9994;
+  --chip: #efeeea; --prop: #a5651a; --prop-bg: #fbf1e3; --ok: #2f6b45; --ok-bg: #e5f0e8;
+  --gc: #2a5e38; --gc-bg: #e3efe6; --esp: #234f7a; --esp-bg: #dde9f5; --evt: #7d2f58; --evt-bg: #f3e7ef; --fer: #8a6a2a; --fer-bg: #f7f0e1;
+  --display: Montserrat, "Helvetica Neue", Arial, sans-serif; --body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121212; --surface: #1c1c1b; --line: #2c2c2a; --ink: #f2f1ed; --muted: #a8a7a2; --soft: #7c7b77;
+  --chip: #262624; --prop: #e0a45a; --prop-bg: #3a2c1a; --ok: #7cc496; --ok-bg: #1d3226;
+  --gc: #8fd0a2; --gc-bg: #1d3226; --esp: #9cc3ec; --esp-bg: #1b2b3d; --evt: #e3a3c6; --evt-bg: #37202d; --fer: #e0c07c; --fer-bg: #352c1a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121212; --surface: #1c1c1b; --line: #2c2c2a; --ink: #f2f1ed; --muted: #a8a7a2; --soft: #7c7b77;
+  --chip: #262624; --prop: #e0a45a; --prop-bg: #3a2c1a; --ok: #7cc496; --ok-bg: #1d3226;
+  --gc: #8fd0a2; --gc-bg: #1d3226; --esp: #9cc3ec; --esp-bg: #1b2b3d; --evt: #e3a3c6; --evt-bg: #37202d; --fer: #e0c07c; --fer-bg: #352c1a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; margin: 0 }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+header.top { padding-block: 22px 10px; display: flex; align-items: center; gap: 14px }
+header.top img { height: 30px; width: auto }
+.corner { margin-left: auto; display: flex; align-items: center; gap: 12px; flex: none }
+.iconbtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--muted); padding: 0; cursor: pointer }
+.iconbtn svg { width: 18px; height: 18px }
+.iconbtn:hover { color: var(--ink); border-color: var(--ink) }
+.online { display: flex; align-items: center }
+.online .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); margin-left: -8px; background: var(--chip); object-fit: cover }
+.online .av:first-child { margin-left: 0 }
+.online .av.me { box-shadow: 0 0 0 2px var(--ink) }
+.online .more, .online .gst { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap }
+.online .gst { border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; background: var(--surface) }
+.online .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-right: 8px; flex: none }
+.online .dot + .av { margin-left: 0 }
+@media (max-width: 520px) { header.top { flex-wrap: wrap; row-gap: 12px } .corner { order: -1; width: 100%; justify-content: flex-end } .online .av:nth-child(n+6) { display: none } }
+.logo-d { display: none }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo-l { display: none } :root:not([data-theme="light"]) .logo-d { display: inline } }
+:root[data-theme="dark"] .logo-l { display: none } :root[data-theme="dark"] .logo-d { display: inline }
+h1 { font-family: var(--display); font-weight: 700; font-size: 22px; margin: 0; letter-spacing: -.01em; text-wrap: balance }
+.sub { color: var(--muted); font-size: 13px }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 10px 12px }
+.months { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin }
+.months button { flex: none; font: 600 13px var(--body); border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer }
+.months button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+select, input[type=search] { font: 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0 }
+input[type=search] { flex: 1 1 200px }
+select { flex: 0 1 auto; max-width: 100% }
+.ms { position: relative; flex: 0 1 auto; min-width: 0 }
+.ms-sum { list-style: none; font: 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 30px 7px 10px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(300px, calc(100vw - 32px)); position: relative }
+.ms-sum::-webkit-details-marker { display: none }
+.ms-sum::after { content: ""; position: absolute; right: 11px; top: 50%; margin-top: -2px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--muted) }
+.ms-sum.on { border-color: var(--ink); font-weight: 600 }
+.ms[open] .ms-sum { border-color: var(--ink) }
+.ms-sum:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+.ms-pop { position: absolute; z-index: 8; top: calc(100% + 6px); left: 0; width: 240px; max-height: min(420px, 62vh); overflow: auto; max-width: calc(100vw - 32px); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px rgb(0 0 0 / .18); padding: 6px; display: flex; flex-direction: column; gap: 2px }
+.ms-pop label { display: flex; align-items: center; gap: 9px; font-size: 14px; padding: 6px 8px; border-radius: 6px; cursor: pointer }
+.ms-pop label:hover { background: var(--surface) }
+.ms-pop label:has(input:checked) { background: var(--chip); font-weight: 600 }
+.ms-pop label:focus-within { outline: 2px solid var(--ink); outline-offset: -2px }
+.ms-pop input { width: 16px; height: 16px; accent-color: var(--ink); margin: 0 }
+.ms-pop hr { border: 0; border-top: 1px solid var(--line); margin: 3px 0 }
+.show { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 8px }
+.show-l { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-right: 4px }
+.ck { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px 4px 7px; white-space: nowrap; cursor: pointer; user-select: none }
+.ck input { accent-color: var(--ink); width: 14px; height: 14px; margin: 0 }
+.ck:has(input:checked) { color: var(--ink); border-color: var(--ink); background: var(--surface) }
+.ck:focus-within { outline: 2px solid var(--ink); outline-offset: 2px }
+.show-sep { width: 1px; height: 18px; background: var(--line); margin: 0 2px }
+.show-act { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--soft); font-size: 13px }
+.show-act button { font: 600 12.5px var(--body); background: none; border: 0; color: var(--ink); text-decoration: underline; cursor: pointer; padding: 2px }
+@media (max-width: 520px) { .show-sep { display: none } .show-l { width: 100% } }
+.tog { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; padding: 4px 2px }
+.tog input { accent-color: var(--ink); width: 16px; height: 16px }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+.meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); padding-block: 14px 4px }
+.meta button { font: 600 13px var(--body); background: none; border: 0; color: var(--ink); text-decoration: underline; cursor: pointer; padding: 0 }
+section.mes { padding-block: 18px 8px }
+section.mes h2 { font-family: var(--display); font-size: 19px; margin: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+section.mes h2 small { font: 500 13px var(--body); color: var(--muted) }
+.gcs { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 6px }
+.w { font-size: 11.5px; border-radius: 6px; padding: 3px 8px; white-space: nowrap }
+.w.sebenta { background: var(--gc-bg); color: var(--gc) } .w.especial { background: var(--esp-bg); color: var(--esp) }
+.w.evento { background: var(--evt-bg); color: var(--evt) } .w.ferias { background: var(--fer-bg); color: var(--fer) }
+ul.lst { list-style: none; margin: 0; padding: 0 }
+li.it { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line) }
+li.it:first-child { border-top: 0 }
+.dt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px }
+.dt span { display: block; font-weight: 400; color: var(--muted); font-size: 12px }
+.tx { min-width: 0 }
+.ti { font-weight: 500 }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px }
+.tag { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; background: var(--chip); color: var(--muted); white-space: nowrap }
+.tag.min { color: var(--ink) }
+.tag.min::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--mc, var(--soft)); margin-right: 5px; vertical-align: 0 }
+.tag.prop { background: var(--prop-bg); color: var(--prop) } .tag.ok { background: var(--ok-bg); color: var(--ok) }
+.tag.int { background: transparent; border: 1px solid var(--line) }
+li.it.fer .ti { color: var(--fer) } li.it.fer .dt { color: var(--fer) }
+li.it.tem .ti { color: var(--muted); font-style: italic }
+li.it.past { opacity: .5 }
+.empty { padding: 40px 0; color: var(--muted); text-align: center }
+footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-top: 1px solid var(--line); margin-top: 24px }
+@media (max-width: 520px) { li.it { grid-template-columns: 84px 1fr; gap: 10px } .dt { font-size: 13px } h1 { font-size: 19px } }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <img class="logo-l" src="simbolo.png" alt="CCLX">
+    <img class="logo-d" src="simbolo-branco.png" alt="CCLX">
+    <div>
+      <h1>Calendário Geral CCLX 2026/27</h1>
+      <div class="sub">Consulta para líderes · <span id="upd">a carregar…</span></div>
+    </div>
+    <div class="corner"><div class="online" id="online" hidden></div><button class="iconbtn" id="btnTheme" type="button"></button></div>
+  </header>
+</div>
+
+<div class="bar">
+  <div class="wrap">
+    <nav class="months" id="months" aria-label="Mês"></nav>
+    <div class="row">
+      <input type="search" id="q" placeholder="Procurar evento…" aria-label="Procurar evento">
+      <details class="ms" id="fMin">
+        <summary class="ms-sum" id="fMinSum">Ministérios: todos</summary>
+        <div class="ms-pop" id="fMinPop" role="group" aria-label="Ministérios">
+          <label><input type="checkbox" id="fMinAll" checked> Todos os ministérios</label>
+          <hr aria-hidden="true">
+        </div>
+      </details>
+      <details class="ms" id="fCom">
+        <summary class="ms-sum" id="fComSum">Comunidades: todas</summary>
+        <div class="ms-pop" role="group" aria-label="Comunidades">
+          <label><input type="checkbox" id="fComAll" checked> Todas as comunidades</label>
+          <hr aria-hidden="true">
+          <label><input type="checkbox" class="fComOpt" id="fCom-sede" value="Sede"> Sede</label>
+          <label><input type="checkbox" class="fComOpt" id="fCom-porto" value="Porto"> Porto</label>
+          <label><input type="checkbox" class="fComOpt" id="fCom-almada" value="Almada"> Almada</label>
+          <label><input type="checkbox" class="fComOpt" id="fCom-moita" value="Moita"> Moita</label>
+          <label><input type="checkbox" class="fComOpt" id="fCom-coruche" value="Coruche"> Coruche</label>
+          <label><input type="checkbox" class="fComOpt" id="fCom-caldas" value="Caldas da Rainha"> Caldas da Rainha</label>
+          <label><input type="checkbox" class="fComOpt" id="fCom-acores" value="Açores"> Açores</label>
+        </div>
+      </details>
+      <select id="fAmb" aria-label="Âmbito">
+        <option value="">Toda a igreja e locais</option>
+        <option value="Igreja">Toda a igreja</option>
+        <option value="Regional">Regional</option>
+        <option value="Comunidade">Locais de comunidade</option>
+      </select>
+      <select id="fEst" aria-label="Estado">
+        <option value="">Aprovadas e propostas</option>
+        <option value="aprovada">Só aprovadas</option>
+        <option value="proposta">Só propostas</option>
+      </select>
+    </div>
+    <div class="show" role="group" aria-label="Mostrar">
+      <span class="show-l">Mostrar</span>
+      <label class="ck"><input type="checkbox" id="tInt"> Eventos internos</label>
+      <label class="ck"><input type="checkbox" id="tPub" checked> Eventos públicos</label>
+      <label class="ck"><input type="checkbox" id="tGc" checked> GCs</label>
+      <label class="ck"><input type="checkbox" id="tTem"> Datas temáticas</label>
+      <label class="ck"><input type="checkbox" id="tFer" checked> Feriados e pausas letivas</label>
+      <span class="show-sep" aria-hidden="true"></span>
+      <label class="ck"><input type="checkbox" id="tPast" checked> Datas passadas</label>
+      <span class="show-act"><button type="button" id="tAll">Tudo</button><span aria-hidden="true">·</span><button type="button" id="tNone">Limpar</button></span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="meta"><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
+  <div id="out"><div class="empty">A carregar o calendário…</div></div>
+  <footer>As datas propostas só contam depois de aprovadas pelo Conselho de Liderança. Para propor uma data, fale com o líder do seu ministério ou com o CL.</footer>
+</main>
+
+<script>
+(() => {
+  const MES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const MC = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const DS = ["dom","seg","ter","qua","qui","sex","sáb"];
+  const ORDER = ["2026-09","2026-10","2026-11","2026-12","2027-01","2027-02","2027-03","2027-04","2027-05","2027-06","2027-07","2027-08"];
+  const MCOL = {"Geral":"#3d3d3a","GCs":"#3b7d4f","Logos":"#5a4f9c","Casais & Famílias (B1+)":"#b0563f","Mulheres":"#a33d6d","Homens (Alcateia)":"#2f5d8a","BASE":"#c27a1e","BASE Teen":"#c27a1e","JUMP":"#8a6d1f","ED":"#2e8a8a","Pastoral":"#6b6a66","Liderança":"#6b6a66"};
+  const $ = id => document.getElementById(id);
+  const P = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const today = iso(new Date());
+  let DATA = null, mes = "";
+  const st = { get(k, d) { try { const v = localStorage.getItem("cclx-consulta-" + k); return v === null ? d : v; } catch (e) { return d; } },
+               set(k, v) { try { localStorage.setItem("cclx-consulta-" + k, v); } catch (e) {} } };
+
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else if (k === "style") n.style.cssText = v; else n.setAttribute(k, v);
+    }
+    for (const c of kids) if (c != null) n.append(c);
+    return n;
+  }
+  function dateCell(r) {
+    const a = P(r.i), b = r.f ? P(r.f) : a;
+    if (r.f && r.f !== r.i) {
+      const top = a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()}/${MC[b.getMonth()]}` : `${a.getDate()}/${MC[a.getMonth()]}–${b.getDate()}/${MC[b.getMonth()]}`;
+      return el("div", { class: "dt" }, top, el("span", { text: `${DS[a.getDay()]} a ${DS[b.getDay()]}` }));
+    }
+    return el("div", { class: "dt" }, `${a.getDate()}/${MC[a.getMonth()]}`, el("span", { text: DS[a.getDay()] }));
+  }
+  function inMonth(r, mk) {
+    const a = r.i.slice(0, 7), b = (r.f || r.i).slice(0, 7);
+    return a <= mk && b >= mk;
+  }
+
+  function buildControls() {
+    const nav = $("months");
+    const mk = (v, label) => {
+      const b = el("button", { type: "button", "aria-pressed": String(v === mes), "data-m": v, text: label });
+      b.addEventListener("click", () => { mes = v; st.set("mes", v); nav.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.m === mes))); render(); });
+      return b;
+    };
+    nav.append(mk("", "Ano todo"));
+    for (const k of ORDER) { const [y, m] = k.split("-").map(Number); nav.append(mk(k, `${MC[m - 1]} ${String(y).slice(2)}`)); }
+    const mins = [...new Set(DATA.datas.filter(r => r.k === "geral").map(r => r.m))].sort((a, b) => a.localeCompare(b, "pt"));
+    mins.forEach((m, i) => $("fMinPop").append(el("label", {}, el("input", { type: "checkbox", class: "fMinOpt", id: "fMin-" + i, value: m }), " " + m)));
+    initMin();
+    initCom();
+    for (const id of ["fAmb", "fEst"]) { $(id).value = st.get(id, ""); $(id).addEventListener("change", e => { st.set(id, e.target.value); render(); }); }
+    const old = st.get("fTipo", "");
+    if (old === "com" || old === "tudo") st.set("tInt", "1");
+    const SHOW = ["tPub", "tInt", "tGc", "tTem", "tFer", "tPast"];
+    $("tAll").addEventListener("click", () => { for (const id of SHOW) { $(id).checked = true; st.set(id, "1"); } render(); });
+    $("tNone").addEventListener("click", () => { for (const id of SHOW) { $(id).checked = false; st.set(id, "0"); } render(); });
+    for (const id of SHOW) { const v = st.get(id, null); if (v !== null) $(id).checked = v === "1"; $(id).addEventListener("change", e => { st.set(id, e.target.checked ? "1" : "0"); render(); }); }
+    $("q").addEventListener("input", render);
+    $("clear").addEventListener("click", () => {
+      $("q").value = ""; for (const id of ["fAmb", "fEst"]) { $(id).value = ""; st.set(id, ""); }
+      setCom([]); setMin([]);
+      const def = { tPub: true, tInt: false, tGc: true, tTem: false, tFer: true, tPast: true };
+      for (const [id, v] of Object.entries(def)) { $(id).checked = v; st.set(id, v ? "1" : "0"); }
+      mes = ""; st.set("mes", ""); $("months").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.m === "")));
+      render();
+    });
+  }
+
+  const comBoxes = () => [...document.querySelectorAll(".fComOpt")];
+  const comSel = () => comBoxes().filter(b => b.checked).map(b => b.value);
+  function comSummary() {
+    const sel = comSel(), sum = $("fComSum");
+    const txt = !sel.length ? "Comunidades: todas" : sel.length <= 2 ? "Comunidades: " + sel.join(", ") : `Comunidades: ${sel.length} selecionadas`;
+    sum.textContent = txt; sum.title = sel.join(", ") || "Todas as comunidades";
+    sum.classList.toggle("on", sel.length > 0);
+    sum.setAttribute("aria-label", txt + ". Abrir para escolher várias comunidades");
+    $("fComAll").checked = !sel.length;
+  }
+  function setCom(list) {
+    comBoxes().forEach(b => { b.checked = list.includes(b.value); });
+    st.set("fCom", JSON.stringify(list)); comSummary();
+  }
+  function fitCom() {
+    const d = $("fCom"), pop = d.querySelector(".ms-pop");
+    if (!d.open) return; pop.style.left = "";
+    const over = pop.getBoundingClientRect().right - (document.documentElement.clientWidth - 12);
+    if (over > 0) pop.style.left = `-${Math.ceil(over)}px`;
+  }
+  function initCom() {
+    let saved = [];
+    try { const v = st.get("fCom", "[]"); saved = v.startsWith("[") ? JSON.parse(v) : (v ? [v] : []); } catch (e) { saved = []; }
+    setCom(saved);
+    comBoxes().forEach(b => b.addEventListener("change", () => { setCom(comSel()); render(); }));
+    $("fComAll").addEventListener("change", () => { setCom([]); render(); });
+    const d = $("fCom");
+    d.addEventListener("toggle", () => { if (d.open && $("fMin").open) $("fMin").open = false; fitCom(); });
+    d.addEventListener("keydown", e => { if (e.key === "Escape" && d.open) { e.preventDefault(); d.open = false; $("fComSum").focus(); } });
+    document.addEventListener("click", e => { if (d.open && !d.contains(e.target)) d.open = false; });
+    window.addEventListener("resize", fitCom);
+  }
+
+  const minBoxes = () => [...document.querySelectorAll(".fMinOpt")];
+  const minSel = () => minBoxes().filter(b => b.checked).map(b => b.value);
+  function minSummary() {
+    const sel = minSel(), sum = $("fMinSum");
+    const txt = !sel.length ? "Ministérios: todos" : sel.length <= 2 ? "Ministérios: " + sel.join(", ") : `Ministérios: ${sel.length} selecionados`;
+    sum.textContent = txt; sum.title = sel.join(", ") || "Todos os ministérios";
+    sum.classList.toggle("on", sel.length > 0);
+    sum.setAttribute("aria-label", txt + ". Abrir para escolher vários ministérios");
+    $("fMinAll").checked = !sel.length;
+  }
+  function setMin(list) {
+    minBoxes().forEach(b => { b.checked = list.includes(b.value); });
+    st.set("fMin2", JSON.stringify(list)); minSummary();
+  }
+  function fitPop(d) {
+    const pop = d.querySelector(".ms-pop");
+    if (!d.open) return; pop.style.left = "";
+    const over = pop.getBoundingClientRect().right - (document.documentElement.clientWidth - 12);
+    if (over > 0) pop.style.left = `-${Math.ceil(over)}px`;
+  }
+  function initMin() {
+    let saved = [];
+    try { saved = JSON.parse(st.get("fMin2", "[]")); } catch (e) { saved = []; }
+    if (!saved.length) { const old = st.get("fMin", ""); if (old) saved = [old]; }
+    setMin(saved);
+    minBoxes().forEach(b => b.addEventListener("change", () => { setMin(minSel()); render(); }));
+    $("fMinAll").addEventListener("change", () => { setMin([]); render(); });
+    const d = $("fMin");
+    d.addEventListener("toggle", () => { if (d.open && $("fCom").open) $("fCom").open = false; fitPop(d); });
+    d.addEventListener("keydown", e => { if (e.key === "Escape" && d.open) { e.preventDefault(); d.open = false; $("fMinSum").focus(); } });
+    document.addEventListener("click", e => { if (d.open && !d.contains(e.target)) d.open = false; });
+    window.addEventListener("resize", () => fitPop(d));
+  }
+
+  function render() {
+    const fc = comSel();
+    const q = $("q").value.trim().toLowerCase(), fm = minSel(), fa = $("fAmb").value, fe = $("fEst").value;
+    const showPub = $("tPub").checked, showInt = $("tInt").checked, showFer = $("tFer").checked, showGc = $("tGc").checked, showTem = $("tTem").checked, showPast = $("tPast").checked;
+    const ev = DATA.datas.filter(r => {
+      if (!showPast && (r.f || r.i) < today) return false;
+      if (q && !r.t.toLowerCase().includes(q)) return false;
+      if (fc.length && r.co && !r.co.some(x => fc.includes(x))) return false;
+      if (r.k === "geral") {
+        if (r.v === "interno" && !showInt) return false;
+        if (r.m === "GCs") { if (!showGc || !fm.includes("GCs")) return false; }
+        else if (r.v !== "interno" && !showPub) return false;
+        if (fm.length && !fm.includes(r.m)) return false;
+        if (fa && r.a !== fa) return false;
+        if (fe && r.e !== fe) return false;
+        return true;
+      }
+      if (fm.length || fa || fe) return false;
+      if (r.k === "feriado" || r.k === "ferias") return showFer;
+      if (r.k === "tematica") return showTem;
+      return false;
+    });
+    const gcs = showGc && !q ? DATA.datas.filter(r => r.k === "gc" && (showPast || (r.f || r.i) >= today)) : [];
+    const months = mes ? [mes] : ORDER;
+    const out = $("out"); out.replaceChildren();
+    let n = 0;
+    for (const mk of months) {
+      const items = ev.filter(r => inMonth(r, mk) && (r.i.slice(0, 7) === mk || r.k === "geral" || r.k === "ferias")).sort((a, b) => a.i.localeCompare(b.i) || a.t.localeCompare(b.t, "pt"));
+      const wk = gcs.filter(r => r.i.slice(0, 7) === mk).sort((a, b) => a.i.localeCompare(b.i));
+      if (!items.length && !wk.length) continue;
+      const [y, m] = mk.split("-").map(Number);
+      const sec = el("section", { class: "mes", id: "m-" + mk });
+      const tema = DATA.meses[mk];
+      sec.append(el("h2", {}, `${MES[m - 1]} ${y}`, tema ? el("small", { text: tema }) : null));
+      if (wk.length) {
+        const g = el("div", { class: "gcs", "aria-label": "Semanas de GC" });
+        for (const w of wk) { const d = P(w.i); g.append(el("span", { class: "w " + w.g, text: `GC · sem. ${d.getDate()}/${MC[d.getMonth()]} · ${w.t}` })); }
+        sec.append(g);
+      }
+      const ul = el("ul", { class: "lst" });
+      for (const r of items) {
+        n += r.k === "geral" ? 1 : 0;
+        const cls = ["it"]; if (r.k === "feriado" || r.k === "ferias") cls.push("fer"); if (r.k === "tematica") cls.push("tem"); if ((r.f || r.i) < today) cls.push("past");
+        const tags = el("div", { class: "tags" });
+        if (r.k === "geral") {
+          const t = el("span", { class: "tag min", text: r.m }); t.style.setProperty("--mc", MCOL[r.m] || "#8a8a86"); tags.append(t);
+          tags.append(el("span", { class: "tag " + (r.e === "aprovada" ? "ok" : "prop"), text: r.e === "aprovada" ? "Aprovada" : "Proposta" }));
+          if (r.v === "interno") tags.append(el("span", { class: "tag int", text: "Interna" }));
+          if (r.a === "Regional") tags.append(el("span", { class: "tag", text: r.rg || "Regional" }));
+          if (r.co && r.a !== "Comunidade" && !r.rg) tags.append(el("span", { class: "tag", text: r.co.join(", ") }));
+          if (r.a === "Comunidade") tags.append(el("span", { class: "tag", text: "Local · " + (r.c || "comunidade") }));
+          if (r.h) tags.append(el("span", { class: "tag", text: r.h }));
+        } else if (r.k === "feriado") tags.append(el("span", { class: "tag", text: r.tf === "Nacional" ? "Feriado nacional" : r.tf }));
+        else if (r.k === "ferias") tags.append(el("span", { class: "tag", text: "Pausa letiva" }));
+        else if (r.k === "tematica") tags.append(el("span", { class: "tag", text: "Data temática" }));
+        ul.append(el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags)));
+      }
+      if (items.length) sec.append(ul);
+      out.append(sec);
+    }
+    if (!out.children.length) out.append(el("div", { class: "empty", text: "Nenhuma data com estes filtros. Experimente limpar os filtros." }));
+    $("count").textContent = `${n} ${n === 1 ? "data" : "datas"}` + (fc.length ? ` para ${fc.length <= 2 ? fc.join(" e ") : fc.length + " comunidades"}` : " da igreja") + (mes ? ` em ${MES[+mes.slice(5) - 1].toLowerCase()}` : " no ano letivo");
+  }
+
+  const ICON = {
+    auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+    claro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    escuro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>' };
+  const MODO_TXT = { auto: "Tema automático (segue o dispositivo)", claro: "Tema claro", escuro: "Tema escuro" };
+  let modo = st.get("modo", "") || ({ light: "claro", dark: "escuro" }[st.get("tema", "")] || "auto");
+  function applyTheme() {
+    if (modo === "claro") document.documentElement.setAttribute("data-theme", "light");
+    else if (modo === "escuro") document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    const b = $("btnTheme"); b.innerHTML = ICON[modo]; b.title = MODO_TXT[modo] + ". Toque para mudar."; b.setAttribute("aria-label", MODO_TXT[modo] + ". Toque para mudar.");
+  }
+  applyTheme();
+  $("btnTheme").addEventListener("click", () => { modo = modo === "auto" ? "claro" : modo === "claro" ? "escuro" : "auto"; st.set("modo", modo); applyTheme(); });
+
+  /* quem está online: avatares das contas Claude; convidados só em número */
+  let room = null, user = null;
+  async function renderOnline() {
+    const box = $("online");
+    if (!room) { box.hidden = true; return; }
+    const ps = room.peers().filter(p => p.kind === "viewer");
+    const byKey = new Map();
+    for (const p of ps) { const k = p.by || p.peer; if (!byKey.has(k) || p.sameTab) byKey.set(k, p); }
+    const all = [...byKey.values()];
+    const guests = all.filter(p => p.guest && !p.isMe);
+    const members = all.filter(p => !p.guest || p.isMe).sort((a, b) => (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0));
+    if (!all.length) { box.hidden = true; return; }
+    let prof = {}; const ids = members.map(p => p.by).filter(Boolean);
+    if (user && ids.length) { try { prof = await user.profiles(ids); } catch (e) {} }
+    const names = members.map(p => { const pr = p.by && prof[p.by]; const n = (pr && pr.name) || (p.isMe ? "Tu" : "Alguém"); return p.isMe ? n + " (tu)" : n; });
+    const shown = members.slice(0, 6);
+    const kids = [el("span", { class: "dot", "aria-hidden": "true" })];
+    shown.forEach((p, i) => { const pr = p.by && prof[p.by]; const img = el("img", { class: "av" + (p.isMe ? " me" : ""), alt: names[i], title: names[i] }); if (pr && pr.avatarUrl) img.src = pr.avatarUrl; kids.push(img); });
+    if (members.length > 6) kids.push(el("span", { class: "more", text: "+" + (members.length - 6) }));
+    if (guests.length) kids.push(el("span", { class: "gst", title: `${guests.length} ${guests.length === 1 ? "convidado" : "convidados"} com a página aberta`, text: `+${guests.length} ${guests.length === 1 ? "convidado" : "convidados"}` }));
+    box.replaceChildren(...kids);
+    const total = all.length;
+    box.title = total === 1 ? "Só tu estás online agora" : `${total} pessoas online agora` + (names.length ? ":\n" + names.join("\n") : "") + (guests.length ? `\n+ ${guests.length} ${guests.length === 1 ? "convidado" : "convidados"}` : "");
+    box.setAttribute("aria-label", box.title);
+    box.hidden = false;
+  }
+  if (window.claude && window.claude.use) {
+    window.claude.use("user").then(u => { user = u; renderOnline(); }).catch(() => {});
+    window.claude.use("room").then(r => { if (!r) return; room = r; r.presence({ vista: "consulta" }).catch(() => {}); r.onPeers(() => renderOnline(), () => { room = null; renderOnline(); }); renderOnline(); }).catch(() => {});
+  }
+
+  fetch("data.json").then(r => r.json()).then(d => {
+    DATA = d;
+    $("upd").textContent = "atualizado a " + d.atualizado;
+    mes = st.get("mes", "");
+    buildControls();
+    render();
+  }).catch(() => { $("out").replaceChildren(el("div", { class: "empty", text: "Não foi possível carregar as datas. Recarregue a página." })); $("count").textContent = ""; });
+})();
+</script>
+
+</body>
+</html>
