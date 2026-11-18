@@ -114,8 +114,47 @@ li.it:first-child { border-top: 0 }
 li.it.fer .ti { color: var(--fer) } li.it.fer .dt { color: var(--fer) }
 li.it.tem .ti { color: var(--muted); font-style: italic }
 li.it.past { opacity: .5 }
+li.it.cel .ti { color: var(--muted) }
 .empty { padding: 40px 0; color: var(--muted); text-align: center }
 footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-top: 1px solid var(--line); margin-top: 24px }
+.vseg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px; margin-right: auto }
+.vseg button { font: 600 12.5px var(--body); border: 0; background: transparent; color: var(--muted); border-radius: 999px; padding: 5px 12px; cursor: pointer }
+.vseg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+.meta { align-items: center }
+.meta #count { order: 2 }
+.meta #clear { order: 3 }
+.tl-wrap { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; overflow-y: hidden; background: var(--bg); position: relative }
+.tl { position: relative }
+.tl-row { position: relative; border-top: 1px solid var(--line) }
+.tl-lab { position: sticky; left: 0; z-index: 3; width: var(--lw, 150px); height: 100%; background: var(--bg); border-right: 1px solid var(--line); font-size: 12px; font-weight: 600; padding: 6px 8px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.25 }
+.tl-lab { font-size: clamp(11px, 2.8vw, 12px) }
+.tl-lab i { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 4px }
+.tl-head { height: 38px; border-top: 0; background: var(--surface) }
+.tl-head .tl-lab { background: var(--surface); color: var(--muted); font-weight: 500; font-size: 11px; align-items: center }
+.tl-m { position: absolute; top: 0; height: 100%; border-left: 1px solid var(--line); font-size: 11.5px; font-weight: 600; padding: 4px 6px; white-space: nowrap; overflow: hidden; color: var(--ink) }
+.tl-d { position: absolute; bottom: 2px; font-size: 10px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums }
+.tl-d.we { color: var(--soft) }
+.tl-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); pointer-events: none }
+.tl-we { position: absolute; top: 0; bottom: 0; background: var(--surface); opacity: .6; pointer-events: none }
+.tl-today { position: absolute; top: 0; bottom: 0; width: 2px; background: #c0392b; opacity: .7; pointer-events: none; z-index: 2 }
+.tl-it { position: absolute; height: 20px; border-radius: 5px; font-size: 11px; line-height: 20px; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; cursor: pointer; border: 0; text-align: left; font-family: var(--body); z-index: 1 }
+.tl-it.prop { background: transparent !important; color: var(--ink); border: 1.5px dashed var(--c) }
+.tl-it.int { opacity: .75 }
+.tl-it.past { opacity: .45 }
+.tl-it.dot { padding: 0; border-radius: 50%; height: 12px; margin-top: 4px }
+.tl-it:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px }
+.tl-it.fer { background: var(--fer-bg); color: var(--fer) }
+.tl-it.ferd { background: var(--fer); }
+.tl-it.tem { background: var(--chip); color: var(--muted); font-style: italic }
+.tl-it.temd { background: var(--muted) }
+.tl-it.gc-sebenta { background: var(--gc-bg); color: var(--gc) } .tl-it.gc-especial { background: var(--esp-bg); color: var(--esp) }
+.tl-it.gc-evento { background: var(--evt-bg); color: var(--evt) } .tl-it.gc-ferias { background: var(--fer-bg); color: var(--fer) }
+.tl-det { margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; background: var(--surface); min-height: 44px }
+.tl-det b { font-weight: 600 }
+.tl-det .tags { margin-top: 6px }
+.tl-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); margin-top: 8px }
+.tl-leg span { display: inline-flex; align-items: center; gap: 6px }
+.tl-leg i { display: inline-block; width: 18px; height: 10px; border-radius: 3px }
 .wk { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 4px 18px; padding: 10px 0 6px; border-top: 1px solid var(--line) }
 .wk-h { grid-column: 1 / -1; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--soft) }
 .wk .lst li.it:first-child { border-top: 0 }
@@ -189,6 +228,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
       <label class="ck"><input type="checkbox" id="tInt"> Eventos internos</label>
       <label class="ck"><input type="checkbox" id="tPub" checked> Eventos públicos</label>
       <label class="ck"><input type="checkbox" id="tGc" checked> GCs</label>
+      <label class="ck"><input type="checkbox" id="tDom" checked> Cultos de domingo</label>
       <label class="ck"><input type="checkbox" id="tTem" checked> Datas temáticas</label>
       <label class="ck"><input type="checkbox" id="tFer" checked> Feriados e pausas letivas</label>
       <span class="show-sep" aria-hidden="true"></span>
@@ -199,7 +239,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
 </div>
 
 <main class="wrap">
-  <div class="meta"><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
+  <div class="meta"><div class="vseg" role="group" aria-label="Vista"><button type="button" data-v="meses" aria-pressed="true">Meses</button><button type="button" data-v="tl" aria-pressed="false">Linha do tempo</button></div><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
   <div id="out"><div class="empty">A carregar o calendário…</div></div>
   <footer>As datas propostas só contam depois de aprovadas pelo Conselho de Liderança. Para propor uma data, fale com o líder do seu ministério ou com o CL.</footer>
 </main>
@@ -215,7 +255,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
   const P = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today = iso(new Date());
-  let DATA = null, mes = "";
+  let DATA = null, mes = "", vista = "meses";
   const st = { get(k, d) { try { const v = localStorage.getItem("cclx-consulta-" + k); return v === null ? d : v; } catch (e) { return d; } },
                set(k, v) { try { localStorage.setItem("cclx-consulta-" + k, v); } catch (e) {} } };
 
@@ -256,15 +296,21 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
     for (const id of ["fAmb", "fEst"]) { $(id).value = st.get(id, ""); $(id).addEventListener("change", e => { st.set(id, e.target.value); render(); }); }
     const old = st.get("fTipo", "");
     if (old === "com" || old === "tudo") st.set("tInt", "1");
-    const SHOW = ["tPub", "tInt", "tGc", "tTem", "tFer", "tPast"];
+    const SHOW = ["tPub", "tInt", "tGc", "tDom", "tTem", "tFer", "tPast"];
     $("tAll").addEventListener("click", () => { for (const id of SHOW) { $(id).checked = true; st.set(id, "1"); } render(); });
     $("tNone").addEventListener("click", () => { for (const id of SHOW) { $(id).checked = false; st.set(id, "0"); } render(); });
     for (const id of SHOW) { const v = st.get(id, null); if (v !== null) $(id).checked = v === "1"; $(id).addEventListener("change", e => { st.set(id, e.target.checked ? "1" : "0"); render(); }); }
     $("q").addEventListener("input", render);
+    vista = st.get("vista", "meses") === "tl" ? "tl" : "meses";
+    document.querySelectorAll(".vseg button").forEach(b => {
+      b.setAttribute("aria-pressed", String(b.dataset.v === vista));
+      b.addEventListener("click", () => { vista = b.dataset.v; st.set("vista", vista); document.querySelectorAll(".vseg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === vista))); render(); });
+    });
+    let rz = 0; window.addEventListener("resize", () => { if (vista !== "tl") return; clearTimeout(rz); rz = setTimeout(render, 150); });
     $("clear").addEventListener("click", () => {
       $("q").value = ""; for (const id of ["fAmb", "fEst"]) { $(id).value = ""; st.set(id, ""); }
       setCom([]); setMin([]);
-      const def = { tPub: true, tInt: false, tGc: true, tTem: true, tFer: true, tPast: true };
+      const def = { tPub: true, tInt: false, tGc: true, tDom: true, tTem: true, tFer: true, tPast: true };
       for (const [id, v] of Object.entries(def)) { $(id).checked = v; st.set(id, v ? "1" : "0"); }
       mes = ""; st.set("mes", ""); $("months").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.m === "")));
       render();
@@ -338,14 +384,113 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
     window.addEventListener("resize", () => fitPop(d));
   }
 
+
+  function renderTL(ev, side, gcs) {
+    const out = $("out"); out.replaceChildren();
+    const DAY = 864e5, LW = (out.clientWidth || 900) < 560 ? 108 : 150;
+    const start = mes ? P(mes + "-01") : P(ORDER[0] + "-01");
+    const endM = mes || ORDER[ORDER.length - 1]; const [ey, em] = endM.split("-").map(Number);
+    const end = new Date(ey, em, 0);
+    const nd = Math.round((end - start) / DAY) + 1;
+    const avail = Math.max(320, (out.clientWidth || 900) - LW - 2);
+    const pxd = mes ? Math.max(26, Math.floor(avail / nd)) : 4;
+    const W = LW + nd * pxd;
+    const sIso = iso(start), eIso = iso(end);
+    const x = s2 => LW + Math.round((P(s2) - start) / DAY) * pxd;
+    const clip = r => ({ a: r.i < sIso ? sIso : r.i, b: (r.f || r.i) > eIso ? eIso : (r.f || r.i) });
+    const vis = r => r.i <= eIso && (r.f || r.i) >= sIso;
+    const wrap = el("div", { class: "tl-wrap" }), tl = el("div", { class: "tl", style: `width:${W}px;--lw:${LW}px` });
+    const det = el("div", { class: "tl-det", "aria-live": "polite", text: "Toque num evento para ver os detalhes." });
+    const fmtR = r => { const a = P(r.i), b = P(r.f || r.i); return r.f && r.f !== r.i ? `${DS[a.getDay()]} ${a.getDate()}/${MC[a.getMonth()]} a ${DS[b.getDay()]} ${b.getDate()}/${MC[b.getMonth()]}/${b.getFullYear()}` : `${DS[a.getDay()]} ${a.getDate()}/${MC[a.getMonth()]}/${a.getFullYear()}`; };
+    const show = (r, kind) => {
+      const tags = el("div", { class: "tags" });
+      if (r.k === "geral") {
+        const t = el("span", { class: "tag min", text: r.m }); t.style.setProperty("--mc", MCOL[r.m] || "#8a8a86"); tags.append(t);
+        tags.append(el("span", { class: "tag " + (r.e === "aprovada" ? "ok" : "prop"), text: r.e === "aprovada" ? "Aprovada" : "Proposta" }));
+        if (r.v === "interno") tags.append(el("span", { class: "tag int", text: "Interna" }));
+        if (r.a === "Regional") tags.append(el("span", { class: "tag", text: r.rg || "Regional" }));
+        if (r.a === "Comunidade") tags.append(el("span", { class: "tag", text: "Local · " + (r.c || "comunidade") }));
+        if (r.co && r.a !== "Comunidade" && !r.rg) tags.append(el("span", { class: "tag", text: r.co.join(", ") }));
+      } else tags.append(el("span", { class: "tag", text: kind }));
+      if (r.cel) { tags.replaceChildren(el("span", { class: "tag", text: "Celebração de domingo · todas as comunidades" })); }
+      det.replaceChildren(el("div", {}, el("b", { text: r.t }), " · " + fmtR(r)), tags);
+    };
+    // header
+    const head = el("div", { class: "tl-row tl-head", style: `height:${mes ? 46 : 38}px` }, el("div", { class: "tl-lab", text: mes ? "Dia" : "Mês" }));
+    for (let d = new Date(start); d <= end; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+      const mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0), a = x(iso(d)), w = (Math.min(mEnd, end) - d) / DAY * pxd + pxd;
+      head.append(el("div", { class: "tl-m", style: `left:${a}px;width:${w}px`, text: `${MC[d.getMonth()]} ${String(d.getFullYear()).slice(2)}` }));
+    }
+    if (mes) for (let i = 0; i < nd; i++) { const d = new Date(start.getTime() + i * DAY), we = d.getDay() === 0 || d.getDay() === 6; head.append(el("div", { class: "tl-d" + (we ? " we" : ""), style: `left:${LW + i * pxd}px;width:${pxd}px`, text: String(d.getDate()) })); }
+    tl.append(head);
+    // background: weekends (month view) / month lines (year view), today
+    const bg = [];
+    if (mes) { for (let i = 0; i < nd; i++) { const d = new Date(start.getTime() + i * DAY); if (d.getDay() === 6) bg.push(el("div", { class: "tl-we", style: `left:${LW + i * pxd}px;width:${pxd * 2}px` })); } }
+    else { for (let d = new Date(start); d <= end; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) bg.push(el("div", { class: "tl-grid", style: `left:${x(iso(d))}px` })); }
+    if (today >= sIso && today <= eIso) bg.push(el("div", { class: "tl-today", style: `left:${x(today) + Math.floor(pxd / 2)}px`, title: "Hoje" }));
+    // lanes
+    const lane = (label, color, items, mk) => {
+      if (!items.length) return;
+      const rows = []; const placed = [];
+      for (const r of items.slice().sort((p, q) => p.i.localeCompare(q.i))) {
+        const c = clip(r), a = x(c.a), w = Math.max((Math.round((P(c.b) - P(c.a)) / DAY) + 1) * pxd, 12);
+        let k = rows.findIndex(endX => endX <= a - 2); if (k < 0) { k = rows.length; rows.push(0); }
+        rows[k] = a + w; placed.push([r, a, w, k]);
+      }
+      const h = Math.max(rows.length * 24 + 8, 40);
+      const row = el("div", { class: "tl-row", style: `height:${h}px` }, el("div", { class: "tl-lab" }, color ? el("i", { style: `background:${color}` }) : null, label));
+      for (const [r, a, w, k] of placed) {
+        const b = mk(r, w); b.style.left = a + "px"; b.style.top = (4 + k * 24) + "px"; b.style.width = w + "px";
+        row.append(b);
+      }
+      tl.append(row);
+    };
+    const btn = (r, w, cls, txt, kind, color) => {
+      const b = el("button", { type: "button", class: "tl-it " + cls + (w <= 13 ? " dot" : "") + ((r.f || r.i) < today ? " past" : ""), title: `${r.t} · ${fmtR(r)}`, "aria-label": `${r.t}, ${fmtR(r)}` });
+      if (color) { b.style.background = color; b.style.setProperty("--c", color); }
+      if (w > 40) b.textContent = txt;
+      b.addEventListener("click", () => show(r, kind));
+      return b;
+    };
+    const fer = side.filter(r => (r.k === "feriado" || r.k === "ferias") && vis(r));
+    lane("Feriados e pausas", null, fer, (r, w) => btn(r, w, r.k === "ferias" ? "fer" : "ferd", r.t, r.k === "ferias" ? "Pausa letiva" : (r.tf === "Nacional" ? "Feriado nacional" : r.tf)));
+    lane("Datas temáticas", null, side.filter(r => r.k === "tematica" && vis(r)), (r, w) => btn(r, w, "temd", r.t, "Data temática"));
+    lane("Ritmo dos GCs", "#3b7d4f", gcs.filter(vis), (r, w) => btn(r, w, "gc-" + (r.g || ""), r.t, "Semana de GC"));
+    const isDom = r => r.cel || (r.k === "geral" && (!r.f || r.f === r.i) && P(r.i).getDay() === 0 && /Culto|Celebração|Festa de Natal|Batismos|Student Take Over/.test(r.t));
+    const dom = ev.filter(r => isDom(r) && vis(r));
+    lane("Cultos de domingo", "#3d3d3a", dom, (r, w) => btn(r, w, r.cel ? "" : (r.e === "aprovada" ? "" : "prop"), r.t, "Celebração de domingo", r.cel ? "#b5b4ae" : (MCOL[r.m] || "#3d3d3a")));
+    const evv = ev.filter(r => !isDom(r) && vis(r));
+    const mins = [...new Set(evv.map(r => r.m))].sort((a, b) => (a === "Geral" ? -1 : b === "Geral" ? 1 : a.localeCompare(b, "pt")));
+    let n = dom.filter(r => !r.cel).length;
+    for (const m of mins) {
+      const its = evv.filter(r => r.m === m); n += its.length;
+      const c = MCOL[m] || "#8a8a86";
+      lane(m, c, its, (r, w) => btn(r, w, (r.e === "aprovada" ? "" : "prop") + (r.v === "interno" ? " int" : ""), r.t, "", c));
+    }
+    const hBody = [...tl.children].reduce((t, r) => t + (parseFloat(r.style.height) || 0) + 1, 0);
+    for (const b of bg) { b.style.top = (mes ? 46 : 38) + "px"; b.style.height = Math.max(0, hBody - (mes ? 46 : 38)) + "px"; b.style.bottom = "auto"; tl.append(b); }
+    wrap.append(tl);
+    if (!evv.length && !fer.length) { out.append(el("div", { class: "empty", text: "Nenhuma data com estes filtros. Experimente limpar os filtros." })); }
+    else {
+      out.append(wrap, det, el("div", { class: "tl-leg" },
+        el("span", {}, el("i", { style: "background:#3d3d3a" }), "Aprovada"),
+        el("span", {}, el("i", { style: "border:1.5px dashed #3d3d3a" }), "Proposta"),
+        el("span", {}, el("i", { style: "background:#c0392b;width:2px" }), "Hoje"),
+        el("span", { text: mes ? "Deslize para o lado para ver o mês todo." : "Escolha um mês para ver os dias. Deslize para o lado para ver o ano todo." })));
+      if (!mes && today >= sIso && today <= eIso) requestAnimationFrame(() => { wrap.scrollLeft = Math.max(0, x(today) - LW - 60); });
+    }
+    $("count").textContent = `${n} ${n === 1 ? "data" : "datas"}` + (mes ? ` em ${MES[+mes.slice(5) - 1].toLowerCase()}` : " no período");
+  }
+
   function render() {
     const fc = comSel();
     const q = $("q").value.trim().toLowerCase(), fm = minSel(), fa = $("fAmb").value, fe = $("fEst").value;
-    const showPub = $("tPub").checked, showInt = $("tInt").checked, showFer = $("tFer").checked, showGc = $("tGc").checked, showTem = $("tTem").checked, showPast = $("tPast").checked;
+    const showPub = $("tPub").checked, showInt = $("tInt").checked, showFer = $("tFer").checked, showGc = $("tGc").checked, showTem = $("tTem").checked, showPast = $("tPast").checked, showDom = $("tDom").checked;
     const ev = DATA.datas.filter(r => {
       if (!showPast && (r.f || r.i) < today) return false;
       if (q && !r.t.toLowerCase().includes(q)) return false;
       if (fc.length && r.co && !r.co.some(x => fc.includes(x))) return false;
+      if (r.cel) return showDom && (!fm.length || fm.includes("Geral")) && !fa && fe !== "proposta";
       if (r.k === "geral") {
         if (r.v === "interno" && !showInt) return false;
         if (r.m === "GCs") { if (!showGc || !fm.includes("GCs")) return false; }
@@ -365,6 +510,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
       return false;
     });
     const gcs = showGc && !q ? DATA.datas.filter(r => r.k === "gc" && (showPast || (r.f || r.i) >= today)) : [];
+    if (vista === "tl") { renderTL(ev, side, gcs); return; }
     const months = mes ? [mes] : ORDER;
     const out = $("out"); out.replaceChildren();
     let n = 0;
@@ -395,9 +541,10 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
         const box = el("div", { class: "wk" }, el("div", { class: "wk-h", text: a1.getDate() === b1.getDate() ? `Dia ${a1.getDate()}` : `Semana de ${a1.getDate()} a ${b1.getDate()}/${MC[m - 1]}` }));
         const ul = el("ul", { class: "lst" });
         for (const r of main) {
-          n += 1;
-          const cls = ["it"]; if ((r.f || r.i) < today) cls.push("past");
+          if (!r.cel) n += 1;
+          const cls = ["it"]; if ((r.f || r.i) < today) cls.push("past"); if (r.cel) cls.push("cel");
           const tags = el("div", { class: "tags" });
+          if (r.cel) { tags.append(el("span", { class: "tag", text: "Celebração de domingo · todas as comunidades" })); ul.append(el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags))); continue; }
           const t = el("span", { class: "tag min", text: r.m }); t.style.setProperty("--mc", MCOL[r.m] || "#8a8a86"); tags.append(t);
           tags.append(el("span", { class: "tag " + (r.e === "aprovada" ? "ok" : "prop"), text: r.e === "aprovada" ? "Aprovada" : "Proposta" }));
           if (r.v === "interno") tags.append(el("span", { class: "tag int", text: "Interna" }));
@@ -494,6 +641,16 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
 
   fetch("data.json").then(r => r.json()).then(d => {
     DATA = d;
+    {
+      const CEL = /Culto|Celebração|Festa de Natal|Batismos|Student Take Over/;
+      const has = new Set(d.datas.filter(r => r.k === "geral" && (!r.f || r.f === r.i) && CEL.test(r.t)).map(r => r.i));
+      const a0 = P(ORDER[0] + "-01"), [ly, lm] = ORDER[ORDER.length - 1].split("-").map(Number), z = new Date(ly, lm, 0);
+      for (let x = new Date(a0); x <= z; x.setDate(x.getDate() + 1)) {
+        if (x.getDay() !== 0) continue;
+        const s2 = iso(x);
+        if (!has.has(s2)) d.datas.push({ k: "geral", i: s2, f: "", t: "Culto de domingo", m: "Geral", v: "publico", e: "aprovada", a: "Igreja", cel: true });
+      }
+    }
     $("upd").textContent = "atualizado a " + d.atualizado;
     mes = st.get("mes", "");
     buildControls();

@@ -6,7 +6,7 @@ Página só de leitura com o calendário geral da CCLX, para os líderes consult
 
 | Ficheiro | O que é |
 |---|---|
-| `index.html` | A página (filtros, tema claro/escuro, lista por mês) |
+| `index.html` | A página: filtros, tema claro/escuro, vista **Meses** (por semana, com feriados e datas temáticas à direita) e vista **Linha do tempo** |
 | `data.json` | As datas do calendário, exportadas da página de gestão |
 | `simbolo.png`, `simbolo-branco.png` | Símbolo da CCLX (tema claro e escuro) |
 | `Calendario-Geral-CCLX-2026-27.pdf` | Apresentação do calendário (27 slides): um slide por mês (16 meses), prioridades, resumo do ano e por ministério |
