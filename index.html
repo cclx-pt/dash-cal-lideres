@@ -116,6 +116,20 @@ li.it.tem .ti { color: var(--muted); font-style: italic }
 li.it.past { opacity: .5 }
 .empty { padding: 40px 0; color: var(--muted); text-align: center }
 footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-top: 1px solid var(--line); margin-top: 24px }
+.wk { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 4px 18px; padding: 10px 0 6px; border-top: 1px solid var(--line) }
+.wk-h { grid-column: 1 / -1; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--soft) }
+.wk .lst li.it:first-child { border-top: 0 }
+.wk .none { color: var(--soft); font-size: 13px; padding: 10px 0 }
+.side { border-left: 1px dashed var(--line); padding: 8px 0 8px 14px; display: flex; flex-direction: column; gap: 7px; font-size: 13px; line-height: 1.35; align-self: start }
+.side:empty { display: none }
+.side .s { display: grid; grid-template-columns: 52px 1fr; gap: 8px }
+.side .s b { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 12.5px }
+.side .s.fer { color: var(--fer) }
+.side .s.tem { color: var(--muted) }
+.side .s.tem span { font-style: italic }
+.side .s small { display: block; font-size: 11px; opacity: .85; font-style: normal }
+.side .s.past { opacity: .5 }
+@media (max-width: 680px) { .wk { grid-template-columns: 1fr } .side { border-left: 0; padding: 6px 0 4px; border-top: 1px dashed var(--line) } }
 @media (max-width: 520px) { li.it { grid-template-columns: 84px 1fr; gap: 10px } .dt { font-size: 13px } h1 { font-size: 19px } }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
 </style>
@@ -175,7 +189,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
       <label class="ck"><input type="checkbox" id="tInt"> Eventos internos</label>
       <label class="ck"><input type="checkbox" id="tPub" checked> Eventos públicos</label>
       <label class="ck"><input type="checkbox" id="tGc" checked> GCs</label>
-      <label class="ck"><input type="checkbox" id="tTem"> Datas temáticas</label>
+      <label class="ck"><input type="checkbox" id="tTem" checked> Datas temáticas</label>
       <label class="ck"><input type="checkbox" id="tFer" checked> Feriados e pausas letivas</label>
       <span class="show-sep" aria-hidden="true"></span>
       <label class="ck"><input type="checkbox" id="tPast" checked> Datas passadas</label>
@@ -250,7 +264,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
     $("clear").addEventListener("click", () => {
       $("q").value = ""; for (const id of ["fAmb", "fEst"]) { $(id).value = ""; st.set(id, ""); }
       setCom([]); setMin([]);
-      const def = { tPub: true, tInt: false, tGc: true, tTem: false, tFer: true, tPast: true };
+      const def = { tPub: true, tInt: false, tGc: true, tTem: true, tFer: true, tPast: true };
       for (const [id, v] of Object.entries(def)) { $(id).checked = v; st.set(id, v ? "1" : "0"); }
       mes = ""; st.set("mes", ""); $("months").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.m === "")));
       render();
@@ -341,7 +355,11 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
         if (fe && r.e !== fe) return false;
         return true;
       }
-      if (fm.length || fa || fe) return false;
+      return false;
+    });
+    const side = DATA.datas.filter(r => {
+      if (!showPast && (r.f || r.i) < today) return false;
+      if (fc.length && r.co && !r.co.some(x => fc.includes(x))) return false;
       if (r.k === "feriado" || r.k === "ferias") return showFer;
       if (r.k === "tematica") return showTem;
       return false;
@@ -351,9 +369,10 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
     const out = $("out"); out.replaceChildren();
     let n = 0;
     for (const mk of months) {
-      const items = ev.filter(r => inMonth(r, mk) && (r.i.slice(0, 7) === mk || r.k === "geral" || r.k === "ferias")).sort((a, b) => a.i.localeCompare(b.i) || a.t.localeCompare(b.t, "pt"));
+      const items = ev.filter(r => inMonth(r, mk) && (r.i.slice(0, 7) === mk || r.k === "geral")).sort((a, b) => a.i.localeCompare(b.i) || a.t.localeCompare(b.t, "pt"));
+      const sideM = side.filter(r => inMonth(r, mk) && (r.k === "ferias" || r.i.slice(0, 7) === mk)).sort((a, b) => a.i.localeCompare(b.i));
       const wk = gcs.filter(r => r.i.slice(0, 7) === mk).sort((a, b) => a.i.localeCompare(b.i));
-      if (!items.length && !wk.length) continue;
+      if (!items.length && !wk.length && !sideM.length) continue;
       const [y, m] = mk.split("-").map(Number);
       const sec = el("section", { class: "mes", id: "m-" + mk });
       const tema = DATA.meses[mk];
@@ -363,12 +382,22 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
         for (const w of wk) { const d = P(w.i); g.append(el("span", { class: "w " + w.g, text: `GC · sem. ${d.getDate()}/${MC[d.getMonth()]} · ${w.t}` })); }
         sec.append(g);
       }
-      const ul = el("ul", { class: "lst" });
-      for (const r of items) {
-        n += r.k === "geral" ? 1 : 0;
-        const cls = ["it"]; if (r.k === "feriado" || r.k === "ferias") cls.push("fer"); if (r.k === "tematica") cls.push("tem"); if ((r.f || r.i) < today) cls.push("past");
-        const tags = el("div", { class: "tags" });
-        if (r.k === "geral") {
+      const first = new Date(y, m - 1, 1), last = new Date(y, m, 0);
+      const mon0 = new Date(first); mon0.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+      const firstIso = iso(first), lastIso = iso(last);
+      const weekOf = s2 => { const d = P(s2 < firstIso ? firstIso : s2); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+      for (let w = new Date(mon0); w <= last; w.setDate(w.getDate() + 7)) {
+        const wIso = iso(w), wEnd = new Date(w); wEnd.setDate(w.getDate() + 6); const eIso = iso(wEnd);
+        const main = items.filter(r => weekOf(r.i) === wIso);
+        const sd = sideM.filter(r => r.k === "ferias" ? (r.i <= eIso && (r.f || r.i) >= wIso && (r.f || r.i) >= firstIso && r.i <= lastIso) : (r.i >= wIso && r.i <= eIso));
+        if (!main.length && !sd.length) continue;
+        const a1 = w < first ? first : w, b1 = wEnd > last ? last : wEnd;
+        const box = el("div", { class: "wk" }, el("div", { class: "wk-h", text: a1.getDate() === b1.getDate() ? `Dia ${a1.getDate()}` : `Semana de ${a1.getDate()} a ${b1.getDate()}/${MC[m - 1]}` }));
+        const ul = el("ul", { class: "lst" });
+        for (const r of main) {
+          n += 1;
+          const cls = ["it"]; if ((r.f || r.i) < today) cls.push("past");
+          const tags = el("div", { class: "tags" });
           const t = el("span", { class: "tag min", text: r.m }); t.style.setProperty("--mc", MCOL[r.m] || "#8a8a86"); tags.append(t);
           tags.append(el("span", { class: "tag " + (r.e === "aprovada" ? "ok" : "prop"), text: r.e === "aprovada" ? "Aprovada" : "Proposta" }));
           if (r.v === "interno") tags.append(el("span", { class: "tag int", text: "Interna" }));
@@ -376,12 +405,24 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
           if (r.co && r.a !== "Comunidade" && !r.rg) tags.append(el("span", { class: "tag", text: r.co.join(", ") }));
           if (r.a === "Comunidade") tags.append(el("span", { class: "tag", text: "Local · " + (r.c || "comunidade") }));
           if (r.h) tags.append(el("span", { class: "tag", text: r.h }));
-        } else if (r.k === "feriado") tags.append(el("span", { class: "tag", text: r.tf === "Nacional" ? "Feriado nacional" : r.tf }));
-        else if (r.k === "ferias") tags.append(el("span", { class: "tag", text: "Pausa letiva" }));
-        else if (r.k === "tematica") tags.append(el("span", { class: "tag", text: "Data temática" }));
-        ul.append(el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags)));
+          ul.append(el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags)));
+        }
+        box.append(main.length ? ul : el("div", { class: "none", text: "Sem eventos nesta semana." }));
+        const sideBox = el("div", { class: "side", "aria-label": "Feriados e datas temáticas da semana" });
+        for (const r of sd) {
+          const d = P(r.i), past = (r.f || r.i) < today ? " past" : "";
+          if (r.k === "ferias") {
+            const e2 = P(r.f || r.i);
+            sideBox.append(el("div", { class: "s fer" + past }, el("b", { text: "Pausa" }), el("span", {}, r.t, el("small", { text: `${d.getDate()}/${MC[d.getMonth()]} a ${e2.getDate()}/${MC[e2.getMonth()]}` }))));
+          } else if (r.k === "feriado") {
+            sideBox.append(el("div", { class: "s fer" + past }, el("b", { text: `${DS[d.getDay()]} ${d.getDate()}` }), el("span", {}, r.t, el("small", { text: r.tf === "Nacional" ? "Feriado nacional" : r.tf }))));
+          } else {
+            sideBox.append(el("div", { class: "s tem" + past }, el("b", { text: `${DS[d.getDay()]} ${d.getDate()}` }), el("span", { text: r.t })));
+          }
+        }
+        box.append(sideBox);
+        sec.append(box);
       }
-      if (items.length) sec.append(ul);
       out.append(sec);
     }
     if (!out.children.length) out.append(el("div", { class: "empty", text: "Nenhuma data com estes filtros. Experimente limpar os filtros." }));
