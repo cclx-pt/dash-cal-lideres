@@ -121,6 +121,13 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
 .vseg button { font: 600 12.5px var(--body); border: 0; background: transparent; color: var(--muted); border-radius: 999px; padding: 5px 12px; cursor: pointer }
 .vseg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
 .meta { align-items: center }
+main .months { padding: 4px 0 8px; margin-bottom: 4px }
+.tl-nav { display: flex; align-items: center; gap: 8px; margin-top: 10px }
+.tl-nav button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 15px var(--body); cursor: pointer; flex: none; line-height: 1 }
+.tl-nav button:hover { border-color: var(--ink) }
+.tl-nav input[type=range] { flex: 1; accent-color: var(--ink); height: 28px; margin: 0; min-width: 0 }
+.tl-nav span { font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums }
+.tl-wrap { scrollbar-width: thin }
 .meta #count { order: 2 }
 .meta #clear { order: 3 }
 .tl-wrap { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; overflow-y: hidden; background: var(--bg); position: relative }
@@ -187,7 +194,6 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
 
 <div class="bar">
   <div class="wrap">
-    <nav class="months" id="months" aria-label="Mês"></nav>
     <div class="row">
       <input type="search" id="q" placeholder="Procurar evento…" aria-label="Procurar evento">
       <details class="ms" id="fMin">
@@ -240,6 +246,7 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
 
 <main class="wrap">
   <div class="meta"><div class="vseg" role="group" aria-label="Vista"><button type="button" data-v="meses" aria-pressed="true">Meses</button><button type="button" data-v="tl" aria-pressed="false">Linha do tempo</button></div><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
+  <nav class="months" id="months" aria-label="Mês"></nav>
   <div id="out"><div class="empty">A carregar o calendário…</div></div>
   <footer>As datas propostas só contam depois de aprovadas pelo Conselho de Liderança. Para propor uma data, fale com o líder do seu ministério ou com o CL.</footer>
 </main>
@@ -472,6 +479,16 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
     wrap.append(tl);
     if (!evv.length && !fer.length) { out.append(el("div", { class: "empty", text: "Nenhuma data com estes filtros. Experimente limpar os filtros." })); }
     else {
+      const rng = el("input", { type: "range", min: "0", max: "1000", value: "0", step: "1", "aria-label": "Deslocar a linha do tempo" });
+      const lbl = el("span");
+      const navB = (t, d, lab) => { const bt = el("button", { type: "button", "aria-label": lab, text: t }); bt.addEventListener("click", () => wrap.scrollBy({ left: d * (wrap.clientWidth - LW) * 0.8, behavior: "smooth" })); return bt; };
+      const nav = el("div", { class: "tl-nav" }, navB("‹", -1, "Recuar"), rng, navB("›", 1, "Avançar"), lbl);
+      const maxS = () => Math.max(1, wrap.scrollWidth - wrap.clientWidth);
+      const sync = () => { rng.value = String(Math.round(wrap.scrollLeft / maxS() * 1000)); const d0 = new Date(start.getTime() + Math.max(0, Math.round(wrap.scrollLeft / pxd)) * DAY); lbl.textContent = mes ? `${d0.getDate()}/${MC[d0.getMonth()]}` : `${MC[d0.getMonth()]} ${String(d0.getFullYear()).slice(2)}`; };
+      rng.addEventListener("input", () => { wrap.scrollLeft = rng.value / 1000 * maxS(); });
+      wrap.addEventListener("scroll", sync, { passive: true });
+      requestAnimationFrame(() => { nav.hidden = wrap.scrollWidth <= wrap.clientWidth + 2; sync(); });
+      out.append(nav);
       out.append(wrap, det, el("div", { class: "tl-leg" },
         el("span", {}, el("i", { style: "background:#3d3d3a" }), "Aprovada"),
         el("span", {}, el("i", { style: "border:1.5px dashed #3d3d3a" }), "Proposta"),
