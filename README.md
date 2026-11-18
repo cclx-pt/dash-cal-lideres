@@ -1,6 +1,6 @@
-# Calendário Geral CCLX 2026/27 — Consulta para líderes
+# Calendário Geral CCLX — Consulta para líderes
 
-Página só de leitura com o calendário geral da CCLX, para os líderes consultarem.
+Página só de leitura com o calendário geral da CCLX, para os líderes consultarem. Cobre de setembro de 2026 a dezembro de 2027: o calendário planeia sempre o ano inteiro.
 
 ## Ficheiros
 
@@ -9,7 +9,7 @@ Página só de leitura com o calendário geral da CCLX, para os líderes consult
 | `index.html` | A página (filtros, tema claro/escuro, lista por mês) |
 | `data.json` | As datas do calendário, exportadas da página de gestão |
 | `simbolo.png`, `simbolo-branco.png` | Símbolo da CCLX (tema claro e escuro) |
-| `Calendario-Geral-CCLX-2026-27.pdf` | Apresentação do calendário (23 slides): um slide por mês, prioridades, resumo do ano e por ministério |
+| `Calendario-Geral-CCLX-2026-27.pdf` | Apresentação do calendário (27 slides): um slide por mês (16 meses), prioridades, resumo do ano e por ministério |
 
 ## Apresentação em PDF
 
