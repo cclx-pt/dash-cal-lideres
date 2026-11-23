@@ -178,6 +178,69 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
 @media (max-width: 680px) { .wk { grid-template-columns: 1fr } .side { border-left: 0; padding: 6px 0 4px; border-top: 1px dashed var(--line) } }
 @media (max-width: 520px) { li.it { grid-template-columns: 84px 1fr; gap: 10px } .dt { font-size: 13px } h1 { font-size: 19px } }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+/* modo edição */
+.edtog { font: 600 12.5px var(--body); border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap }
+.edtog[aria-pressed="true"] { background: var(--prop-bg); border-color: var(--prop); color: var(--prop) }
+.edbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; border: 1px solid var(--prop); background: var(--prop-bg); border-radius: 10px; padding: 10px 12px; margin: 4px 0 10px; font-size: 13px }
+.edbar .ed-who { font-weight: 600 }
+.ed-sel { display: inline-flex; align-items: center; gap: 6px }
+.ed-hint { flex-basis: 100%; color: var(--muted); font-size: 12px }
+.ed-btn { font: 600 12.5px var(--body); border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 6px 11px; cursor: pointer }
+.ed-btn:hover { border-color: var(--ink) }
+.ed-btn.pri { background: var(--ink); color: var(--bg); border-color: var(--ink) }
+.ed-btn:disabled { opacity: .55; cursor: default }
+.ed-link { font: 600 12.5px var(--body); background: none; border: 0; color: var(--ink); text-decoration: underline; cursor: pointer; padding: 2px 0 }
+.ed-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 6px }
+.ed-add { display: block; width: 100%; margin: 6px 0 4px; font: 600 12.5px var(--body); color: var(--prop); background: transparent; border: 1.5px dashed var(--prop); border-radius: 8px; padding: 7px 10px; cursor: pointer; text-align: left }
+.ed-add:hover { background: var(--prop-bg) }
+.ed-li { list-style: none; padding: 0 0 10px }
+.ed-form { border: 1px solid var(--prop); background: var(--bg); border-radius: 10px; padding: 12px; margin: 6px 0 8px; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px }
+.ed-fh span { color: var(--muted) }
+.ed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px }
+.ed-f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); min-width: 0 }
+.ed-f small { font-weight: 400; color: var(--soft) }
+.ed-f input, .ed-f select, .ed-f textarea, .ed-dec input { font: 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; min-width: 0; width: 100% }
+.ed-f textarea { resize: vertical }
+.ed-av { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px }
+.ed-av > div { border-radius: 6px; padding: 5px 8px }
+.ed-av-ok { background: var(--ok-bg); color: var(--ok) }
+.ed-av-aviso { background: var(--prop-bg); color: var(--prop) }
+.ed-av-erro { background: #f6dede; color: #9b2c2c }
+.ed-av-info { background: var(--surface); color: var(--muted) }
+.ed-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px }
+.ed-msg { font-size: 12.5px; color: #9b2c2c }
+.ed-sent li.it { opacity: .9 } .ed-sent .ti { font-style: italic }
+.ed-sent li.it { border: 1.5px dashed var(--prop); border-radius: 8px; padding: 8px; margin: 6px 0 }
+.tag.sent { background: var(--prop-bg); color: var(--prop) }
+.ed-sent-note { font-size: 12px; color: var(--prop); margin-top: 4px; font-weight: 600 }
+.ed-dlg { border: 1px solid var(--line); border-radius: 14px; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 40px); background: var(--bg); color: var(--ink); box-shadow: 0 20px 50px rgb(0 0 0 / .25) }
+.ed-dlg::backdrop { background: rgb(0 0 0 / .35) }
+.ed-dh { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 6px; position: sticky; top: 0; background: var(--bg); z-index: 1 }
+.ed-dh h3 { font-family: var(--display); font-size: 17px; margin: 0 }
+.ed-x { font-size: 20px; line-height: 1 }
+.ed-pf, .ed-list { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px }
+.ed-pf p { margin: 0; color: var(--muted) }
+.ed-foot { padding: 0 16px 16px }
+.ed-code { font-size: 20px !important; letter-spacing: .2em; font-variant-numeric: tabular-nums }
+.ed-fs { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 0 }
+.ed-fs legend { font-size: 12px; font-weight: 600; color: var(--muted); padding: 0 4px }
+.ed-mins { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 10px; font-size: 13.5px }
+.ed-mins label { display: flex; align-items: center; gap: 6px } .ed-mins input { accent-color: var(--ink) }
+.ed-tabs { margin: 0 16px 6px }
+.ed-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px }
+.ed-card.off { opacity: .55 }
+.ed-ch { display: flex; flex-wrap: wrap; gap: 5px }
+.ed-cw { font-weight: 500 }
+.ed-cs { font-size: 12.5px; color: var(--muted) }
+.ed-cav { color: var(--prop) } .ed-cnota { color: var(--ink) }
+.ed-dec { display: flex; flex-direction: column; gap: 6px; margin-top: 4px }
+.ed-empty { color: var(--muted); margin: 6px 0 }
+.tag.est-pendente { background: var(--prop-bg); color: var(--prop) } .tag.est-aceite { background: var(--ok-bg); color: var(--ok) }
+.tag.est-recusada, .tag.est-cancelada { background: var(--chip); color: var(--soft) } .tag.est-outra_data { background: var(--esp-bg); color: var(--esp) }
+.ed-toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13.5px; z-index: 50; max-width: calc(100vw - 32px); box-shadow: 0 10px 30px rgb(0 0 0 / .25) }
+body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ed-av-erro { background: #3d1f1f; color: #f0a8a8 } :root:not([data-theme="light"]) .ed-msg { color: #f0a8a8 } }
+:root[data-theme="dark"] .ed-av-erro { background: #3d1f1f; color: #f0a8a8 } :root[data-theme="dark"] .ed-msg { color: #f0a8a8 }
 </style>
 
 <div class="wrap">
@@ -245,10 +308,11 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
 </div>
 
 <main class="wrap">
-  <div class="meta"><div class="vseg" role="group" aria-label="Vista"><button type="button" data-v="meses" aria-pressed="true">Meses</button><button type="button" data-v="tl" aria-pressed="false">Linha do tempo</button></div><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
+  <div class="meta"><div class="vseg" role="group" aria-label="Vista"><button type="button" data-v="meses" aria-pressed="true">Meses</button><button type="button" data-v="tl" aria-pressed="false">Linha do tempo</button></div><button type="button" class="edtog" id="btnEd" aria-pressed="false" hidden>✎ Modo edição</button><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
+  <div class="edbar" id="edbar" hidden></div>
   <nav class="months" id="months" aria-label="Mês"></nav>
   <div id="out"><div class="empty">A carregar o calendário…</div></div>
-  <footer>As datas propostas só contam depois de aprovadas pelo Conselho de Liderança. Para propor uma data, fale com o líder do seu ministério ou com o CL.</footer>
+  <footer>As datas propostas só contam depois de aprovadas pelo Conselho de Liderança. Os líderes de ministério podem propor datas no «Modo edição»; o CL decide cada proposta.</footer>
 </main>
 
 <script>
@@ -421,6 +485,7 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
       } else tags.append(el("span", { class: "tag", text: kind }));
       if (r.cel) { tags.replaceChildren(el("span", { class: "tag", text: "Celebração de domingo · todas as comunidades" })); }
       det.replaceChildren(el("div", {}, el("b", { text: r.t }), " · " + fmtR(r)), tags);
+      if (edOn()) window.ED.det(det, r);
     };
     // header
     const head = el("div", { class: "tl-row tl-head", style: `height:${mes ? 46 : 38}px` }, el("div", { class: "tl-lab", text: mes ? "Dia" : "Mês" }));
@@ -437,7 +502,7 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
     if (today >= sIso && today <= eIso) bg.push(el("div", { class: "tl-today", style: `left:${x(today) + Math.floor(pxd / 2)}px`, title: "Hoje" }));
     // lanes
     const lane = (label, color, items, mk) => {
-      if (!items.length) return;
+      if (!items.length && !(mk.min && edOn())) return;
       const rows = []; const placed = [];
       for (const r of items.slice().sort((p, q) => p.i.localeCompare(q.i))) {
         const c = clip(r), a = x(c.a), w = Math.max((Math.round((P(c.b) - P(c.a)) / DAY) + 1) * pxd, 12);
@@ -446,6 +511,13 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
       }
       const h = Math.max(rows.length * 24 + 8, 40);
       const row = el("div", { class: "tl-row", style: `height:${h}px` }, el("div", { class: "tl-lab" }, color ? el("i", { style: `background:${color}` }) : null, label));
+      if (mk.min) row.addEventListener("click", e => {
+        if (!edOn() || e.target !== row) return;
+        if (!mes) { det.textContent = "Escolha um mês (em cima) para propor uma data num dia da linha do tempo."; return; }
+        const k = Math.floor((e.clientX - row.getBoundingClientRect().left - LW) / pxd); if (k < 0 || k >= nd) return;
+        const dia = iso(new Date(start.getFullYear(), start.getMonth(), start.getDate() + k));
+        if (window.ED.tlNew(det, dia, mk.min)) det.scrollIntoView({ block: "nearest" });
+      });
       for (const [r, a, w, k] of placed) {
         const b = mk(r, w); b.style.left = a + "px"; b.style.top = (4 + k * 24) + "px"; b.style.width = w + "px";
         row.append(b);
@@ -467,12 +539,13 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
     const dom = ev.filter(r => isDom(r) && vis(r));
     lane("Cultos de domingo", "#3d3d3a", dom, (r, w) => btn(r, w, r.cel ? "" : (r.e === "aprovada" ? "" : "prop"), r.t, "Celebração de domingo", r.cel ? "#b5b4ae" : (MCOL[r.m] || "#3d3d3a")));
     const evv = ev.filter(r => !isDom(r) && vis(r));
-    const mins = [...new Set(evv.map(r => r.m))].sort((a, b) => (a === "Geral" ? -1 : b === "Geral" ? 1 : a.localeCompare(b, "pt")));
+    const mins = [...new Set(evv.map(r => r.m).concat(edOn() ? window.ED.lanes() : []))].sort((a, b) => (a === "Geral" ? -1 : b === "Geral" ? 1 : a.localeCompare(b, "pt")));
     let n = dom.filter(r => !r.cel).length;
     for (const m of mins) {
       const its = evv.filter(r => r.m === m); n += its.length;
       const c = MCOL[m] || "#8a8a86";
-      lane(m, c, its, (r, w) => btn(r, w, (r.e === "aprovada" ? "" : "prop") + (r.v === "interno" ? " int" : ""), r.t, "", c));
+      const mkB = (r, w) => btn(r, w, (r.e === "aprovada" ? "" : "prop") + (r.v === "interno" ? " int" : ""), r.t, "", c); mkB.min = m;
+      lane(m, c, its, mkB);
     }
     const hBody = [...tl.children].reduce((t, r) => t + (parseFloat(r.style.height) || 0) + 1, 0);
     for (const b of bg) { b.style.top = (mes ? 46 : 38) + "px"; b.style.height = Math.max(0, hBody - (mes ? 46 : 38)) + "px"; b.style.bottom = "auto"; tl.append(b); }
@@ -535,7 +608,7 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
       const items = ev.filter(r => inMonth(r, mk) && (r.i.slice(0, 7) === mk || r.k === "geral")).sort((a, b) => a.i.localeCompare(b.i) || a.t.localeCompare(b.t, "pt"));
       const sideM = side.filter(r => inMonth(r, mk) && (r.k === "ferias" || r.i.slice(0, 7) === mk)).sort((a, b) => a.i.localeCompare(b.i));
       const wk = gcs.filter(r => r.i.slice(0, 7) === mk).sort((a, b) => a.i.localeCompare(b.i));
-      if (!items.length && !wk.length && !sideM.length) continue;
+      if (!items.length && !wk.length && !sideM.length && !edOn()) continue;
       const [y, m] = mk.split("-").map(Number);
       const sec = el("section", { class: "mes", id: "m-" + mk });
       const tema = DATA.meses[mk];
@@ -553,7 +626,7 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
         const wIso = iso(w), wEnd = new Date(w); wEnd.setDate(w.getDate() + 6); const eIso = iso(wEnd);
         const main = items.filter(r => weekOf(r.i) === wIso);
         const sd = sideM.filter(r => r.k === "ferias" ? (r.i <= eIso && (r.f || r.i) >= wIso && (r.f || r.i) >= firstIso && r.i <= lastIso) : (r.i >= wIso && r.i <= eIso));
-        if (!main.length && !sd.length) continue;
+        if (!main.length && !sd.length && !edOn()) continue;
         const a1 = w < first ? first : w, b1 = wEnd > last ? last : wEnd;
         const box = el("div", { class: "wk" }, el("div", { class: "wk-h", text: a1.getDate() === b1.getDate() ? `Dia ${a1.getDate()}` : `Semana de ${a1.getDate()} a ${b1.getDate()}/${MC[m - 1]}` }));
         const ul = el("ul", { class: "lst" });
@@ -569,9 +642,12 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
           if (r.co && r.a !== "Comunidade" && !r.rg) tags.append(el("span", { class: "tag", text: r.co.join(", ") }));
           if (r.a === "Comunidade") tags.append(el("span", { class: "tag", text: "Local · " + (r.c || "comunidade") }));
           if (r.h) tags.append(el("span", { class: "tag", text: r.h }));
-          ul.append(el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags)));
+          const li = el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags));
+          ul.append(li); if (edOn()) window.ED.item(li, r);
         }
-        box.append(main.length ? ul : el("div", { class: "none", text: "Sem eventos nesta semana." }));
+        const col = el("div", { class: "wk-main" }, main.length ? ul : el("div", { class: "none", text: "Sem eventos nesta semana." }));
+        box.append(col);
+        if (edOn()) window.ED.week(col, { wIso: iso(a1), eIso: iso(b1) });
         const sideBox = el("div", { class: "side", "aria-label": "Feriados e datas temáticas da semana" });
         for (const r of sd) {
           const d = P(r.i), past = (r.f || r.i) < today ? " past" : "";
@@ -656,6 +732,13 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px }
     window.claude.use("room").then(r => { if (!r) return; room = r; r.presence({ vista: "consulta" }).catch(() => {}); r.onPeers(() => renderOnline(), () => { room = null; renderOnline(); }); renderOnline(); }).catch(() => {});
   }
 
+  window.CCLX = { el, P, iso, MC, DS, MES, MCOL, today, $, render: () => DATA && render(), DATA: () => DATA };
+  const edOn = () => !!(window.ED && window.ED.on && window.ED.lider);
+  if (/(^|\.)github\.io$|(^|\.)cclx\.pt$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
+    const load = src => new Promise((ok, ko) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = ko; document.head.append(sc); });
+    const ready = new Promise(ok => { const t = setInterval(() => { if (DATA) { clearInterval(t); ok(); } }, 50); });
+    load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js").then(() => ready).then(() => load("editar.js")).catch(() => {});
+  }
   fetch("data.json").then(r => r.json()).then(d => {
     DATA = d;
     {
