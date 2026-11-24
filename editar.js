@@ -9,7 +9,7 @@
   const sb = window.supabase && window.supabase.createClient ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true } }) : null;
   const st = { get(k, d) { try { const v = localStorage.getItem("cclx-ed-" + k); return v === null ? d : v; } catch (e) { return d; } },
                set(k, v) { try { localStorage.setItem("cclx-ed-" + k, v); } catch (e) {} } };
-  const ED = window.ED = { on: false, me: null, lider: null, min: "", mine: [], open: null };
+  const ED = window.ED = { on: false, me: null, lider: null, min: "", mine: [], props: [], open: null };
   const fmt = s => { if (!s) return ""; const d = P(s); return `${DS[d.getDay()]} ${d.getDate()}/${MC[d.getMonth()]}/${d.getFullYear()}`; };
   const fmtR = (a, b) => b && b !== a ? `${fmt(a)} a ${fmt(b)}` : fmt(a);
   const MAXD = "2027-12-31", MIND = "2026-09-01";
@@ -91,6 +91,16 @@
       grid.append(field("Âmbito", tAmb), fc, field("Visibilidade", tVis));
     }
     box.append(grid);
+    if (kind === "retirar") {
+      const go = el("button", { type: "button", class: "ed-link", text: "Mudar data" });
+      go.addEventListener("click", () => {
+        const wrap = box.closest(".ed-li"), prev = wrap ? wrap.previousElementSibling : null, par = box.parentNode;
+        const f = form("mudar", ctx);
+        if (prev) { const nl = el("li", { class: "ed-li" }, f); prev.after(nl); ED.open = nl; } else par.append(f);
+        f.querySelector("input")?.focus();
+      });
+      box.append(el("div", { class: "ed-tip" }, "Quer passar para outro dia? Use ", go, ". Assim o CL decide a mudança de uma só vez."));
+    }
     tMot = el("textarea", { rows: "2", maxlength: "600", placeholder: kind === "nova" ? "Para quem é, o que é, notas para o CL" : "Porque propõe esta alteração" });
     box.append(field(kind === "nova" ? "Descrição e notas" : "Motivo", tMot));
     let av = avBox([]); box.append(av);
@@ -132,11 +142,29 @@
   }
 
   /* ---------- ganchos chamados pela página ---------- */
+  const dm = s => { const d = P(s); return `${d.getDate()}/${MC[d.getMonth()]}`; };
+  const pLab = p => p.tipo === "nova" ? "nova" : p.tipo === "retirar" ? "retirar" : `mudar para ${DS[P(p.data_inicio).getDay()]} ${dm(p.data_inicio)}`;
+  const pTag = (p, txt) => el("span", { class: "tag sent", text: `Proposta ${p.ministerio} · ${txt || pLab(p)}` });
+  const pend = () => ED.props.filter(p => p.estado === "pendente");
+  function pInfo(p) {
+    const quem = p.nome || p.email || "";
+    const bits = [`Proposta por ${quem}${quem ? ", " : ""}${new Date(p.criado_em).toLocaleDateString("pt-PT")}`];
+    if (p.tipo === "mudar") bits.push(`De ${fmtR(p.data_atual, p.data_atual_fim)} para ${fmtR(p.data_inicio, p.data_fim)}`);
+    if (p.hora) bits.push("Hora: " + p.hora);
+    if (p.motivo) bits.push((p.tipo === "nova" ? "Notas: " : "Motivo: ") + p.motivo);
+    bits.push("Aguarda decisão do CL.");
+    return el("div", { class: "ed-pinfo", text: bits.join(" · ") });
+  }
+  function toggleInfo(tx, p) { const o = tx.querySelector(".ed-pinfo"); if (o) o.remove(); else tx.append(pInfo(p)); }
   ED.item = (li, r) => {
-    const pend = ED.mine.filter(p => p.evento_id === r.id && p.estado === "pendente");
     const tx = li.querySelector(".tx");
-    for (const p of pend) tx.append(el("div", { class: "ed-sent-note", text: p.tipo === "retirar" ? "Proposta enviada: retirar do calendário" : `Proposta enviada: mudar para ${fmtR(p.data_inicio, p.data_fim)}` }));
-    if (!canEdit(r)) return;
+    for (const p of pend().filter(p => p.evento_id === r.id)) {
+      li.classList.add(p.tipo === "retirar" ? "ed-ret" : "ed-mov");
+      const t = pTag(p); t.setAttribute("role", "button"); t.tabIndex = 0; t.title = "Ver detalhes da proposta";
+      t.addEventListener("click", () => toggleInfo(tx, p)); t.addEventListener("keydown", e => { if (e.key === "Enter") toggleInfo(tx, p); });
+      tx.querySelector(".tags").append(t);
+    }
+    if (!ED.on || !canEdit(r)) return;
     const a = el("div", { class: "ed-row" });
     const b1 = el("button", { type: "button", class: "ed-link", text: "Mudar data" });
     const b2 = el("button", { type: "button", class: "ed-link", text: "Retirar" });
@@ -144,24 +172,35 @@
     b2.addEventListener("click", () => { const f = form("retirar", { r }); li.after(el("li", { class: "ed-li" }, f)); ED.open = f.parentNode; f.querySelector("textarea")?.focus(); });
     a.append(b1, b2); tx.append(a);
   };
+  ED.hasIn = (a, b) => pend().some(p => p.tipo !== "retirar" && p.data_inicio >= a && p.data_inicio <= b);
   ED.week = (col, ctx) => {
-    const sent = ED.mine.filter(p => p.tipo === "nova" && p.estado === "pendente" && p.data_inicio >= ctx.wIso && p.data_inicio <= ctx.eIso);
-    if (sent.length) {
-      const ul = el("ul", { class: "lst ed-sent" });
-      for (const p of sent) {
-        const d = P(p.data_inicio);
-        ul.append(el("li", { class: "it" }, el("div", { class: "dt" }, `${d.getDate()}/${MC[d.getMonth()]}`, el("span", { text: DS[d.getDay()] })),
-          el("div", { class: "tx" }, el("div", { class: "ti", text: p.titulo }), el("div", { class: "tags" }, el("span", { class: "tag min", text: p.ministerio, style: `--mc:${MCOL[p.ministerio] || "#8a8a86"}` }), el("span", { class: "tag sent", text: "Proposta enviada" })))));
+    const here = pend().filter(p => p.tipo !== "retirar" && p.data_inicio >= ctx.wIso && p.data_inicio <= ctx.eIso).sort((x, y) => x.data_inicio.localeCompare(y.data_inicio));
+    if (here.length) {
+      let ul = col.querySelector("ul.lst");
+      if (!ul) { ul = el("ul", { class: "lst" }); col.querySelector(".none")?.remove(); col.prepend(ul); }
+      for (const p of here) {
+        const tx = el("div", { class: "tx" }, el("div", { class: "ti", text: p.tipo === "nova" ? p.titulo : p.evento_titulo }),
+          el("div", { class: "tags" }, el("span", { class: "tag min", text: p.ministerio, style: `--mc:${MCOL[p.ministerio] || "#8a8a86"}` }), pTag(p, p.tipo === "nova" ? "nova" : `vem de ${dm(p.data_atual)}`)));
+        const li = el("li", { class: "it ed-pr", "data-i": p.data_inicio, tabindex: "0", role: "button", title: "Ver detalhes da proposta" }, C.dateCell({ i: p.data_inicio, f: p.data_fim || "" }), tx);
+        li.addEventListener("click", e => { if (!e.target.closest(".ed-pinfo")) toggleInfo(tx, p); });
+        li.addEventListener("keydown", e => { if (e.key === "Enter") toggleInfo(tx, p); });
+        const nxt = [...ul.children].find(x => (x.dataset.i || "") > p.data_inicio);
+        nxt ? nxt.before(li) : ul.append(li);
       }
-      col.prepend(ul);
     }
-    if (!ED.lider || !myMins().length) return;
+    if (!ED.on || !ED.lider || !myMins().length) return;
     const b = el("button", { type: "button", class: "ed-add", text: "+ Propor data nesta semana" });
     b.addEventListener("click", () => { const f = form("nova", ctx); b.after(f); f.querySelector("select,input")?.focus(); });
     col.append(b);
   };
+  ED.flag = r => { const p = pend().find(p => p.evento_id === r.id); return !p ? "" : p.tipo === "retirar" ? " lpr" : " lpo"; };
+  ED.tlItems = () => pend().filter(p => p.tipo !== "retirar").map(p => ({ k: "geral", m: p.ministerio, e: "proposta", v: "publico", i: p.data_inicio, f: p.data_fim || "", t: p.tipo === "nova" ? p.titulo : p.evento_titulo, pr: p }));
+  ED.tlTag = (tags, r) => {
+    if (r.pr) { tags.replaceChildren(el("span", { class: "tag min", text: r.m, style: `--mc:${MCOL[r.m] || "#8a8a86"}` }), pTag(r.pr, r.pr.tipo === "nova" ? "nova" : `vem de ${dm(r.pr.data_atual)}`)); tags.after(pInfo(r.pr)); return; }
+    for (const p of pend().filter(p => p.evento_id === r.id)) tags.append(pTag(p));
+  };
   ED.det = (det, r) => {
-    if (!canEdit(r)) return;
+    if (!ED.on || !canEdit(r)) return;
     const a = el("div", { class: "ed-row" });
     const b1 = el("button", { type: "button", class: "ed-link", text: "Mudar data" });
     const b2 = el("button", { type: "button", class: "ed-link", text: "Retirar" });
@@ -288,7 +327,7 @@
           const mk = (t, est, cls) => { const b = el("button", { type: "button", class: "ed-btn " + (cls || ""), text: t }); b.addEventListener("click", async () => {
             if (est !== "aceite" && !nota.value.trim()) { nota.focus(); nota.placeholder = "Escreva a nota para o líder"; return; }
             b.disabled = true; const { error: e2 } = await sb.from("goplan_calendar").update({ estado: est, nota_cl: nota.value.trim() || null }).eq("id", p.id);
-            if (e2) { b.disabled = false; toast("Não foi possível guardar."); return; } toast(EST[est] + "."); clPanel("prop"); }); return b; };
+            if (e2) { b.disabled = false; toast("Não foi possível guardar."); return; } toast(EST[est] + "."); await loadMine(); C.render(); clPanel("prop"); }); return b; };
           act = el("div", { class: "ed-dec" }, nota, el("div", { class: "ed-row" }, mk("Aceitar", "aceite", "pri"), mk("Pedir outra data", "outra_data"), mk("Recusar", "recusada")));
         }
         body.append(propCard(p, act));
@@ -312,6 +351,8 @@
     if (!ED.me) { ED.mine = []; return; }
     const { data } = await sb.from("goplan_calendar").select("*").eq("proposto_por", ED.me.id).order("criado_em", { ascending: false }).limit(200);
     ED.mine = data || [];
+    if (ED.lider) { const { data: all } = await sb.from("goplan_calendar").select("*").eq("estado", "pendente").order("criado_em").limit(500); ED.props = all || []; }
+    else ED.props = ED.mine;
   }
   function drawBar() {
     btn.setAttribute("aria-pressed", String(ED.on));
@@ -338,7 +379,7 @@
   }
   async function onSession(session) {
     ED.me = session ? session.user : null;
-    if (!ED.me) { ED.lider = null; ED.on = false; ED.mine = []; drawBar(); C.render(); return; }
+    if (!ED.me) { ED.lider = null; ED.on = false; ED.mine = []; ED.props = []; drawBar(); C.render(); return; }
     const { data } = await sb.from("goplan_calendar_lideres").select("*").eq("email", (ED.me.email || "").toLowerCase()).eq("ativo", true).maybeSingle();
     ED.lider = data || null;
     ED.min = st.get("min", "");

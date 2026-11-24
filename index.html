@@ -122,6 +122,11 @@ footer { color: var(--soft); font-size: 12px; padding-block: 28px 40px; border-t
 .vseg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
 .meta { align-items: center }
 main .months { padding: 4px 0 8px; margin-bottom: 4px; flex-direction: column; gap: 6px; overflow: visible }
+main .months { position: sticky; top: var(--barH, 0px); z-index: 4; background: var(--bg); margin-inline: -4px; padding-inline: 4px; border-bottom: 1px solid transparent }
+main .months.stuck { border-bottom-color: var(--line) }
+@media (max-width: 680px) { .bar { position: static } }
+.months button.cur:not([aria-pressed="true"]) { border-color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink) }
+section.mes { scroll-margin-top: calc(var(--barH, 0px) + var(--monH, 0px) + 8px) }
 .mrow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px }
 .months button.yr { font-family: var(--display); font-weight: 700; min-width: 64px; background: var(--surface) }
 .months button.yr[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
@@ -251,6 +256,15 @@ main .months { padding: 4px 0 8px; margin-bottom: 4px; flex-direction: column; g
 .tag.est-recusada, .tag.est-cancelada { background: var(--chip); color: var(--soft) } .tag.est-outra_data { background: var(--esp-bg); color: var(--esp) }
 .ed-toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13.5px; z-index: 50; max-width: calc(100vw - 32px); box-shadow: 0 10px 30px rgb(0 0 0 / .25) }
 body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
+li.it.ed-mov > .dt, li.it.ed-mov .ti { opacity: .55 }
+.tl-it.lp { background: var(--prop-bg) !important; border: 1.5px dashed var(--prop) !important; color: var(--prop) !important; font-weight: 600 }
+.tl-it.lpo { opacity: .4 } .tl-it.lpr { text-decoration: line-through; opacity: .5 }
+li.it.ed-ret .ti { text-decoration: line-through; text-decoration-color: var(--prop); opacity: .7 }
+.tag.sent { cursor: pointer }
+li.it.ed-pr { cursor: pointer; border: 1.5px dashed var(--prop); border-radius: 8px; padding: 8px; margin: 6px 0 } li.it.ed-pr .ti { font-style: italic }
+li.it.ed-pr + li.it { border-top: 0 }
+.ed-pinfo { font-size: 12.5px; color: var(--prop); background: var(--prop-bg); border-radius: 8px; padding: 6px 9px; margin-top: 6px }
+.ed-tip { font-size: 12.5px; color: var(--muted); background: var(--surface); border-radius: 8px; padding: 6px 9px }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ed-av-erro { background: #3d1f1f; color: #f0a8a8 } :root:not([data-theme="light"]) .ed-msg { color: #f0a8a8 } }
 :root[data-theme="dark"] .ed-av-erro { background: #3d1f1f; color: #f0a8a8 } :root[data-theme="dark"] .ed-msg { color: #f0a8a8 }
 </style>
@@ -508,6 +522,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
       } else tags.append(el("span", { class: "tag", text: kind }));
       if (r.cel) { tags.replaceChildren(el("span", { class: "tag", text: "Celebração de domingo · todas as comunidades" })); }
       det.replaceChildren(el("div", {}, el("b", { text: r.t }), " · " + fmtR(r)), tags);
+      if (edSess()) window.ED.tlTag(tags, r);
       if (edOn()) window.ED.det(det, r);
     };
     // header
@@ -561,13 +576,13 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
     const isDom = r => r.cel || (r.k === "geral" && (!r.f || r.f === r.i) && P(r.i).getDay() === 0 && /Culto|Celebração|Festa de Natal|Batismos|Student Take Over/.test(r.t));
     const dom = ev.filter(r => isDom(r) && vis(r));
     lane("Cultos de domingo", "#3d3d3a", dom, (r, w) => btn(r, w, r.cel ? "" : (r.e === "aprovada" ? "" : "prop"), r.t, "Celebração de domingo", r.cel ? "#b5b4ae" : (MCOL[r.m] || "#3d3d3a")));
-    const evv = ev.filter(r => !isDom(r) && vis(r));
+    const evv = ev.filter(r => !isDom(r) && vis(r)).concat(edSess() ? window.ED.tlItems().filter(vis) : []);
     const mins = [...new Set(evv.map(r => r.m).concat(edOn() ? window.ED.lanes() : []))].sort((a, b) => (a === "Geral" ? -1 : b === "Geral" ? 1 : a.localeCompare(b, "pt")));
     let n = dom.filter(r => !r.cel).length;
     for (const m of mins) {
       const its = evv.filter(r => r.m === m); n += its.length;
       const c = MCOL[m] || "#8a8a86";
-      const mkB = (r, w) => btn(r, w, (r.e === "aprovada" ? "" : "prop") + (r.v === "interno" ? " int" : ""), r.t, "", c); mkB.min = m;
+      const mkB = (r, w) => btn(r, w, (r.e === "aprovada" ? "" : "prop") + (r.v === "interno" ? " int" : "") + (r.pr ? " lp" : edSess() ? window.ED.flag(r) : ""), r.t, "", c); mkB.min = m;
       lane(m, c, its, mkB);
     }
     const hBody = [...tl.children].reduce((t, r) => t + (parseFloat(r.style.height) || 0) + 1, 0);
@@ -588,12 +603,41 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
       out.append(wrap, det, el("div", { class: "tl-leg" },
         el("span", {}, el("i", { style: "background:#3d3d3a" }), "Aprovada"),
         el("span", {}, el("i", { style: "border:1.5px dashed #3d3d3a" }), "Proposta"),
+        edSess() ? el("span", {}, el("i", { style: "border:1.5px dashed var(--prop);background:var(--prop-bg)" }), "Proposta de ministério (aguarda o CL)") : null,
         el("span", {}, el("i", { style: "background:#c0392b;width:2px" }), "Hoje"),
         el("span", { text: M ? "Deslize para o lado para ver o mês todo." : "Escolha um mês para ver os dias. Deslize para o lado para ver o período todo." })));
       if (!M && today >= sIso && today <= eIso) requestAnimationFrame(() => { wrap.scrollLeft = Math.max(0, x(today) - LW - 60); });
     }
     $("count").textContent = `${n} ${n === 1 ? "data" : "datas"}` + (perTxt() || " no período");
   }
+
+  /* meses fixos no topo e mês visível destacado */
+  let spyObs = null;
+  function setCur(mk) {
+    document.querySelectorAll("#months button[data-m]").forEach(b => b.classList.toggle("cur", b.dataset.m === mk));
+    const b = document.querySelector(`#months button[data-m="${mk}"]`);
+    if (b) { const row = b.parentElement, r = b.getBoundingClientRect(), rr = row.getBoundingClientRect(); if (r.left < rr.left || r.right > rr.right) row.scrollTo({ left: b.offsetLeft - row.offsetLeft - 60, behavior: "smooth" }); }
+  }
+  function spy() {
+    if (spyObs) { spyObs.disconnect(); spyObs = null; }
+    setCur("");
+    if (vista !== "meses" || isMon()) return;
+    const secs = [...document.querySelectorAll("section.mes")]; if (!secs.length) return;
+    const pick = () => {
+      const top = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--barH")) || 0) + ($("months").offsetHeight || 0) + 20;
+      let cur = secs[0];
+      for (const s of secs) { if (s.getBoundingClientRect().top <= top) cur = s; else break; }
+      setCur(cur.id.slice(2));
+    };
+    spyObs = { disconnect: () => window.removeEventListener("scroll", onS) };
+    let tk = 0; const onS = () => { if (tk) return; tk = requestAnimationFrame(() => { tk = 0; pick(); }); };
+    window.addEventListener("scroll", onS, { passive: true }); pick();
+  }
+  const barEl = document.querySelector(".bar");
+  const barSticky = () => getComputedStyle(barEl).position === "sticky";
+  const setBarH = () => { document.documentElement.style.setProperty("--barH", (barSticky() ? barEl.offsetHeight : 0) + "px"); document.documentElement.style.setProperty("--monH", ($("months").offsetHeight || 0) + "px"); };
+  if (window.ResizeObserver) { const ro = new ResizeObserver(setBarH); ro.observe(barEl); ro.observe($("months")); } window.addEventListener("resize", setBarH); setBarH();
+  window.addEventListener("scroll", () => { const m = $("months"); m.classList.toggle("stuck", m.getBoundingClientRect().top <= ((barSticky() ? barEl.offsetHeight : 0) + 1)); }, { passive: true });
 
   function render() {
     const fc = comSel();
@@ -623,7 +667,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
       return false;
     });
     const gcs = showGc && !q ? DATA.datas.filter(r => r.k === "gc" && (showPast || (r.f || r.i) >= today)) : [];
-    if (vista === "tl") { renderTL(ev, side, gcs); return; }
+    if (vista === "tl") { renderTL(ev, side, gcs); spy(); return; }
     const months = perMeses();
     const out = $("out"); out.replaceChildren();
     let n = 0;
@@ -631,7 +675,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
       const items = ev.filter(r => inMonth(r, mk) && (r.i.slice(0, 7) === mk || r.k === "geral")).sort((a, b) => a.i.localeCompare(b.i) || a.t.localeCompare(b.t, "pt"));
       const sideM = side.filter(r => inMonth(r, mk) && (r.k === "ferias" || r.i.slice(0, 7) === mk)).sort((a, b) => a.i.localeCompare(b.i));
       const wk = gcs.filter(r => r.i.slice(0, 7) === mk).sort((a, b) => a.i.localeCompare(b.i));
-      if (!items.length && !wk.length && !sideM.length && !edOn()) continue;
+      if (!items.length && !wk.length && !sideM.length && !edOn() && !(edSess() && window.ED.hasIn(mk + "-01", mk + "-31"))) continue;
       const [y, m] = mk.split("-").map(Number);
       const sec = el("section", { class: "mes", id: "m-" + mk });
       const tema = DATA.meses[mk];
@@ -649,7 +693,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
         const wIso = iso(w), wEnd = new Date(w); wEnd.setDate(w.getDate() + 6); const eIso = iso(wEnd);
         const main = items.filter(r => weekOf(r.i) === wIso);
         const sd = sideM.filter(r => r.k === "ferias" ? (r.i <= eIso && (r.f || r.i) >= wIso && (r.f || r.i) >= firstIso && r.i <= lastIso) : (r.i >= wIso && r.i <= eIso));
-        if (!main.length && !sd.length && !edOn()) continue;
+        if (!main.length && !sd.length && !edOn() && !(edSess() && window.ED.hasIn(wIso < firstIso ? firstIso : wIso, eIso > lastIso ? lastIso : eIso))) continue;
         const a1 = w < first ? first : w, b1 = wEnd > last ? last : wEnd;
         const box = el("div", { class: "wk" }, el("div", { class: "wk-h", text: a1.getDate() === b1.getDate() ? `Dia ${a1.getDate()}` : `Semana de ${a1.getDate()} a ${b1.getDate()}/${MC[m - 1]}` }));
         const ul = el("ul", { class: "lst" });
@@ -657,7 +701,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
           if (!r.cel) n += 1;
           const cls = ["it"]; if ((r.f || r.i) < today) cls.push("past"); if (r.cel) cls.push("cel");
           const tags = el("div", { class: "tags" });
-          if (r.cel) { tags.append(el("span", { class: "tag", text: "Celebração de domingo · todas as comunidades" })); ul.append(el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags))); continue; }
+          if (r.cel) { tags.append(el("span", { class: "tag", text: "Celebração de domingo · todas as comunidades" })); ul.append(el("li", { class: cls.join(" "), "data-i": r.i }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags))); continue; }
           const t = el("span", { class: "tag min", text: r.m }); t.style.setProperty("--mc", MCOL[r.m] || "#8a8a86"); tags.append(t);
           tags.append(el("span", { class: "tag " + (r.e === "aprovada" ? "ok" : "prop"), text: r.e === "aprovada" ? "Aprovada" : "Proposta" }));
           if (r.v === "interno") tags.append(el("span", { class: "tag int", text: "Interna" }));
@@ -665,12 +709,12 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
           if (r.co && r.a !== "Comunidade" && !r.rg) tags.append(el("span", { class: "tag", text: r.co.join(", ") }));
           if (r.a === "Comunidade") tags.append(el("span", { class: "tag", text: "Local · " + (r.c || "comunidade") }));
           if (r.h) tags.append(el("span", { class: "tag", text: r.h }));
-          const li = el("li", { class: cls.join(" ") }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags));
-          ul.append(li); if (edOn()) window.ED.item(li, r);
+          const li = el("li", { class: cls.join(" "), "data-i": r.i }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags));
+          ul.append(li); if (edSess()) window.ED.item(li, r);
         }
         const col = el("div", { class: "wk-main" }, main.length ? ul : el("div", { class: "none", text: "Sem eventos nesta semana." }));
         box.append(col);
-        if (edOn()) window.ED.week(col, { wIso: iso(a1), eIso: iso(b1) });
+        if (edSess()) window.ED.week(col, { wIso: iso(a1), eIso: iso(b1) });
         const sideBox = el("div", { class: "side", "aria-label": "Feriados e datas temáticas da semana" });
         for (const r of sd) {
           const d = P(r.i), past = (r.f || r.i) < today ? " past" : "";
@@ -690,6 +734,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
     }
     if (!out.children.length) out.append(el("div", { class: "empty", text: "Nenhuma data com estes filtros. Experimente limpar os filtros." }));
     $("count").textContent = `${n} ${n === 1 ? "data" : "datas"}` + (fc.length ? ` para ${fc.length <= 2 ? fc.join(" e ") : fc.length + " comunidades"}` : " da igreja") + (perTxt() || " no período");
+    spy();
   }
 
   const ICON = {
@@ -755,8 +800,9 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
     window.claude.use("room").then(r => { if (!r) return; room = r; r.presence({ vista: "consulta" }).catch(() => {}); r.onPeers(() => renderOnline(), () => { room = null; renderOnline(); }); renderOnline(); }).catch(() => {});
   }
 
-  window.CCLX = { el, P, iso, MC, DS, MES, MCOL, today, $, render: () => DATA && render(), DATA: () => DATA };
+  window.CCLX = { dateCell, el, P, iso, MC, DS, MES, MCOL, today, $, render: () => DATA && render(), DATA: () => DATA };
   const edOn = () => !!(window.ED && window.ED.on && window.ED.lider);
+  const edSess = () => !!(window.ED && window.ED.me);
   if (/(^|\.)github\.io$|(^|\.)cclx\.pt$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
     const load = src => new Promise((ok, ko) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = ko; document.head.append(sc); });
     const ready = new Promise(ok => { const t = setInterval(() => { if (DATA) { clearInterval(t); ok(); } }, 50); });
