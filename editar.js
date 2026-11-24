@@ -265,12 +265,11 @@
     const em = el("input", { type: "email", autocomplete: "email", required: "", value: email || "" });
     const mins = el("div", { class: "ed-mins" });
     for (const m of allMins()) mins.append(el("label", {}, el("input", { type: "checkbox", value: m }), " " + m));
-    const tx = el("textarea", { rows: "2", maxlength: "500", placeholder: "Opcional: a sua função no ministério ou na comunidade" });
     const msg = el("div", { class: "ed-msg", role: "status" });
     const go = el("button", { type: "submit", class: "ed-btn pri", text: "Pedir acesso" });
     const f = el("form", { class: "ed-pf" },
       el("p", { text: email ? "Este email ainda não tem acesso. Indique o nome e o ministério (ou ministérios) para que vai propor datas. O CL confirma o pedido e depois já pode entrar com este email." : "Indique o nome, o email e o ministério (ou ministérios) para que vai propor datas. O CL confirma o pedido e depois já pode entrar com este email." }),
-      field("Nome", nm), field("Email", em), el("fieldset", { class: "ed-fs" }, el("legend", { text: "Ministério(s) para que vai propor" }), mins), field("Mensagem para o CL", tx), el("div", { class: "ed-act" }, go, msg));
+      field("Nome", nm), field("Email", em), el("fieldset", { class: "ed-fs" }, el("legend", { text: "Ministério(s) para que vai propor" }), mins), el("div", { class: "ed-act" }, go, msg));
     f.addEventListener("submit", async e => {
       e.preventDefault(); msg.textContent = "";
       const mail = em.value.trim().toLowerCase(), nome = nm.value.trim(), ms = [...mins.querySelectorAll("input:checked")].map(x => x.value);
@@ -278,7 +277,7 @@
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { msg.textContent = "Escreva um email válido."; em.focus(); return; }
       if (!ms.length) { msg.textContent = "Escolha pelo menos um ministério."; return; }
       go.disabled = true; go.textContent = "A enviar…";
-      const { data, error } = await sb.rpc("goplan_cal_pedir", { p_email: mail, p_nome: nome, p_ministerios: ms, p_mensagem: tx.value.trim() });
+      const { data, error } = await sb.rpc("goplan_cal_pedir", { p_email: mail, p_nome: nome, p_ministerios: ms, p_mensagem: "" });
       go.disabled = false; go.textContent = "Pedir acesso";
       if (error) { msg.textContent = /Muitos/.test(error.message) ? "Há muitos pedidos neste momento. Tente mais tarde." : "Não foi possível enviar o pedido. Tente de novo."; return; }
       st.set("email", mail);
