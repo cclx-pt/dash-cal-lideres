@@ -1,12 +1,13 @@
 /* Modo edição do Calendário Geral CCLX (só no GitHub Pages).
-   Líderes pedem acesso, o CL aprova, e depois entram com o código ou o link que chega por email.
+   O CL regista os líderes (email e ministérios); o líder entra só com o email registado.
    Propostas ficam no Supabase (projeto dash-cal, tabela goplan_calendar). Só a chave pública. */
 (() => {
   const SB_URL = "https://qtboyrccpubxwjaudued.supabase.co";
   const SB_KEY = "sb_publishable_nGXTkIM8UREZnk-h7PZYPA_79hsPIjA";
   const C = window.CCLX; if (!C) return;
   const { el, P, iso, MC, DS, MES, MCOL, today, $ } = C;
-  const sb = window.supabase && window.supabase.createClient ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true } }) : null;
+  const sb = window.supabase && window.supabase.createClient ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false, detectSessionInUrl: false, autoRefreshToken: false } }) : null;
+  const rpc = (fn, args) => sb.rpc(fn, Object.assign({ p_email: ED.me ? ED.me.email : "" }, args || {}));
   const st = { get(k, d) { try { const v = localStorage.getItem("cclx-ed-" + k); return v === null ? d : v; } catch (e) { return d; } },
                set(k, v) { try { localStorage.setItem("cclx-ed-" + k, v); } catch (e) {} } };
   const ED = window.ED = { on: false, me: null, lider: null, min: "", mine: [], props: [], open: null };
@@ -128,12 +129,14 @@
         if (tFim.value && tFim.value < tIni.value) { msg.textContent = "A data final é antes da inicial."; tFim.focus(); return; }
         if (kind === "mudar" && tIni.value === r.i && (tFim.value || "") === (r.f || "")) { msg.textContent = "A nova data é igual à atual."; return; }
         row.data_inicio = tIni.value; row.data_fim = tFim.value || null; row.hora = tHora.value.trim() || null;
-        row.avisos = avisos(tIni.value, tFim.value, r && r.id).map(x => x[1]);
+        const avs = avisos(tIni.value, tFim.value, r && r.id);
+        const er = avs.find(x => x[0] === "erro"); if (er) { msg.textContent = er[1]; tIni.focus(); return; }
+        row.avisos = avs.map(x => x[1]);
       }
       send.disabled = true; send.textContent = "A enviar…";
-      const { error } = await sb.from("goplan_calendar").insert(row);
+      const { error } = await rpc("goplan_cal_propor", { p: row });
       send.disabled = false; send.textContent = "Enviar proposta";
-      if (error) { msg.textContent = /row-level/.test(error.message) ? "Não tem permissão para propor neste ministério." : "Não foi possível enviar. Tente de novo."; return; }
+      if (error) { msg.textContent = /permiss|acesso/i.test(error.message) ? "Não tem permissão para propor neste ministério." : "Não foi possível enviar. Tente de novo."; return; }
       closeOpen(); await loadMine(); C.render();
       toast("Proposta enviada ao CL. Pode acompanhar em «As minhas propostas».");
     });
@@ -230,44 +233,26 @@
     if (!dlg.open) dlg.showModal();
   }
 
-  /* login: 1.º passo email; se não estiver registado, pedido de acesso */
+  /* entrada: só o email registado pelo CL (sem código) */
   function loginPanel(pref) {
     const em = el("input", { type: "email", autocomplete: "email", required: "", placeholder: "nome@exemplo.pt", value: pref || st.get("email", "") });
     const msg = el("div", { class: "ed-msg", role: "status" });
-    const go = el("button", { type: "submit", class: "ed-btn pri", text: "Enviar código" });
-    const f = el("form", { class: "ed-pf" }, el("p", { text: "Para propor datas, entre com o email registado pelo CL. Enviamos um código e um link de entrada para esse email." }), field("Email", em), el("div", { class: "ed-act" }, go, msg));
+    const go = el("button", { type: "submit", class: "ed-btn pri", text: "Entrar" });
+    const f = el("form", { class: "ed-pf" }, el("p", { text: "Para propor datas, escreva o email registado pelo CL." }), field("Email", em), el("div", { class: "ed-act" }, go, msg));
     f.addEventListener("submit", async e => {
       e.preventDefault(); msg.textContent = "";
       const email = em.value.trim().toLowerCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Escreva um email válido."; return; }
       go.disabled = true; go.textContent = "A verificar…";
-      const { data: ok, error: e1 } = await sb.rpc("goplan_cal_registado", { p_email: email });
-      if (e1) { go.disabled = false; go.textContent = "Enviar código"; msg.textContent = "Não foi possível ligar. Tente de novo."; return; }
-      if (!ok) { go.disabled = false; go.textContent = "Enviar código"; msg.textContent = "Este email ainda não tem acesso ao modo edição. Fale com o CL."; return; }
-      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
-      go.disabled = false; go.textContent = "Enviar código";
-      if (error) { msg.textContent = /rate|seconds/i.test(error.message) ? "Pediu um código há pouco. Aguarde um minuto e tente de novo." : "Não foi possível enviar o código. Tente de novo."; return; }
-      st.set("email", email); codePanel(email);
-    });
-    panel("Entrar no modo edição", f);
-    em.focus();
-  }
-  function codePanel(email) {
-    const code = el("input", { type: "text", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "10", required: "", placeholder: "Código do email", class: "ed-code" });
-    const msg = el("div", { class: "ed-msg", role: "status" });
-    const go = el("button", { type: "submit", class: "ed-btn pri", text: "Entrar" });
-    const f = el("form", { class: "ed-pf" }, el("p", {}, "Enviámos um código para ", el("b", { text: email }), ". Escreva-o aqui, ou abra o link do email neste dispositivo."), field("Código", code), el("div", { class: "ed-act" }, go, msg));
-    const back = el("button", { type: "button", class: "ed-link", text: "Usar outro email" }); back.addEventListener("click", () => loginPanel(email));
-    f.addEventListener("submit", async e => {
-      e.preventDefault(); msg.textContent = "";
-      go.disabled = true; go.textContent = "A entrar…";
-      const { error } = await sb.auth.verifyOtp({ email, token: code.value.trim(), type: "email" });
+      const { data, error } = await sb.rpc("goplan_cal_entrar", { p_email: email });
       go.disabled = false; go.textContent = "Entrar";
-      if (error) { msg.textContent = "Código inválido ou expirado. Confirme ou peça um novo."; return; }
-      dlg.close();
+      if (error) { msg.textContent = "Não foi possível ligar. Tente de novo."; return; }
+      if (!data) { msg.textContent = "Este email ainda não tem acesso. Fale com o CL."; return; }
+      st.set("email", email); st.set("on", "1");
+      dlg.close(); await entrar(email, data);
     });
-    panel("Código de entrada", f, el("div", { class: "ed-foot" }, back));
-    code.focus();
+    panel("Propor datas", f);
+    em.focus();
   }
   /* as minhas propostas */
   const EST = { pendente: "Pendente", aceite: "Aceite", recusada: "Recusada", outra_data: "Pedida outra data", cancelada: "Cancelada" };
@@ -293,7 +278,7 @@
       let act = null;
       if (p.estado === "pendente") {
         const b = el("button", { type: "button", class: "ed-link", text: "Cancelar proposta" });
-        b.addEventListener("click", async () => { b.disabled = true; const { error } = await sb.from("goplan_calendar").update({ estado: "cancelada" }).eq("id", p.id); if (error) { b.disabled = false; toast("Não foi possível cancelar."); return; } await loadMine(); C.render(); minePanel(); });
+        b.addEventListener("click", async () => { b.disabled = true; const { data: okc, error } = await rpc("goplan_cal_cancelar", { p_id: p.id }); if (error || !okc) { b.disabled = false; toast("Não foi possível cancelar."); return; } await loadMine(); C.render(); minePanel(); });
         act = el("div", { class: "ed-row" }, b);
       }
       list.append(propCard(p, act));
@@ -312,7 +297,7 @@
     panel("Conselho de Liderança", tabs, body);
     if (tab === "prop") {
       const flt = st.get("clEst", "pendente");
-      const { data, error } = await sb.from("goplan_calendar").select("*").order("criado_em", { ascending: false }).limit(300);
+      const { data, error } = await rpc("goplan_cal_propostas");
       body.replaceChildren();
       if (error) { body.append(el("p", { class: "ed-empty", text: "Não foi possível carregar." })); return; }
       const sel = el("select", { "aria-label": "Estado" }); for (const [v, t] of [["pendente", "Pendentes"], ["aceite", "Aceites (por importar)"], ["", "Todas"]]) sel.append(el("option", { value: v, text: t }));
@@ -326,19 +311,19 @@
           const nota = el("input", { type: "text", maxlength: "300", placeholder: "Nota para o líder (obrigatória ao recusar ou pedir outra data)" });
           const mk = (t, est, cls) => { const b = el("button", { type: "button", class: "ed-btn " + (cls || ""), text: t }); b.addEventListener("click", async () => {
             if (est !== "aceite" && !nota.value.trim()) { nota.focus(); nota.placeholder = "Escreva a nota para o líder"; return; }
-            b.disabled = true; const { error: e2 } = await sb.from("goplan_calendar").update({ estado: est, nota_cl: nota.value.trim() || null }).eq("id", p.id);
+            b.disabled = true; const { error: e2 } = await rpc("goplan_cal_decidir", { p_id: p.id, p_estado: est, p_nota: nota.value.trim() });
             if (e2) { b.disabled = false; toast("Não foi possível guardar."); return; } toast(EST[est] + "."); await loadMine(); C.render(); clPanel("prop"); }); return b; };
           act = el("div", { class: "ed-dec" }, nota, el("div", { class: "ed-row" }, mk("Aceitar", "aceite", "pri"), mk("Pedir outra data", "outra_data"), mk("Recusar", "recusada")));
         }
         body.append(propCard(p, act));
       }
     } else {
-      const { data, error } = await sb.from("goplan_calendar_lideres").select("*").order("nome");
+      const { data, error } = await rpc("goplan_cal_lideres");
       body.replaceChildren();
       if (error) { body.append(el("p", { class: "ed-empty", text: "Não foi possível carregar." })); return; }
       for (const l of data) {
         const b = el("button", { type: "button", class: "ed-link", text: l.ativo ? "Desativar" : "Ativar" });
-        b.addEventListener("click", async () => { b.disabled = true; await sb.from("goplan_calendar_lideres").update({ ativo: !l.ativo }).eq("email", l.email); clPanel("lid"); });
+        b.addEventListener("click", async () => { b.disabled = true; const { error: e3 } = await rpc("goplan_cal_lider_ativo", { p_alvo: l.email, p_ativo: !l.ativo }); if (e3) toast("Não foi possível alterar."); clPanel("lid"); });
         body.append(el("div", { class: "ed-card" + (l.ativo ? "" : " off") }, el("div", { class: "ed-cw" }, el("b", { text: l.nome || l.email }), " · " + l.email),
           el("div", { class: "ed-cs", text: (l.papel === "cl" ? "CL · " : "") + (l.ministerios.join(", ") || "sem ministérios") }), el("div", { class: "ed-row" }, b)));
       }
@@ -349,10 +334,10 @@
   const btn = $("btnEd"), bar = $("edbar");
   async function loadMine() {
     if (!ED.me) { ED.mine = []; return; }
-    const { data } = await sb.from("goplan_calendar").select("*").eq("proposto_por", ED.me.id).order("criado_em", { ascending: false }).limit(200);
-    ED.mine = data || [];
-    if (ED.lider) { const { data: all } = await sb.from("goplan_calendar").select("*").eq("estado", "pendente").order("criado_em").limit(500); ED.props = all || []; }
-    else ED.props = ED.mine;
+    const { data } = await rpc("goplan_cal_propostas");
+    const all = data || [];
+    ED.mine = all.filter(p => p.email === ED.me.email);
+    ED.props = all.filter(p => p.estado === "pendente");
   }
   function drawBar() {
     btn.setAttribute("aria-pressed", String(ED.on));
@@ -362,7 +347,7 @@
     bar.hidden = false; bar.replaceChildren();
     if (!ED.lider) {
       bar.append(el("span", { text: `Entrou como ${ED.me.email}, mas este email ainda não tem acesso aprovado.` }));
-      const out = el("button", { type: "button", class: "ed-link", text: "Sair" }); out.addEventListener("click", () => sb.auth.signOut()); bar.append(out); return;
+      const out = el("button", { type: "button", class: "ed-link", text: "Sair" }); out.addEventListener("click", sair); bar.append(out); return;
     }
     const sel = el("select", { "aria-label": "Ministério a editar" });
     if (isCL()) sel.append(el("option", { value: "", text: "Todos os ministérios" }));
@@ -373,19 +358,21 @@
     mine.addEventListener("click", minePanel);
     bar.append(el("span", { class: "ed-who", text: ED.lider.nome || ED.me.email }), el("label", { class: "ed-sel" }, el("span", { text: "A editar:" }), sel), mine);
     if (isCL()) { const cl = el("button", { type: "button", class: "ed-btn", text: "CL: propostas" }); cl.addEventListener("click", () => clPanel()); bar.append(cl); }
-    const out = el("button", { type: "button", class: "ed-link", text: "Sair" }); out.addEventListener("click", async () => { await sb.auth.signOut(); });
+    const out = el("button", { type: "button", class: "ed-link", text: "Sair" }); out.addEventListener("click", sair);
     bar.append(out);
     bar.append(el("div", { class: "ed-hint", text: "Toque em «+ Propor data nesta semana» ou em «Mudar data» / «Retirar» num evento. Na linha do tempo, toque num dia vazio da linha do ministério." }));
   }
-  async function onSession(session) {
-    ED.me = session ? session.user : null;
-    if (!ED.me) { ED.lider = null; ED.on = false; ED.mine = []; ED.props = []; drawBar(); C.render(); return; }
-    const { data } = await sb.from("goplan_calendar_lideres").select("*").eq("email", (ED.me.email || "").toLowerCase()).eq("ativo", true).maybeSingle();
-    ED.lider = data || null;
+  async function entrar(email, lid) {
+    ED.me = { email }; ED.lider = lid ? { ...lid, ministerios: lid.ministerios || [] } : null;
+    if (!ED.lider) { sair(); return; }
     ED.min = st.get("min", "");
     await loadMine();
     ED.on = st.get("on", "1") === "1";
     drawBar(); C.render();
+  }
+  function sair() {
+    st.set("email", ""); ED.me = null; ED.lider = null; ED.on = false; ED.mine = []; ED.props = [];
+    closeOpen(); drawBar(); C.render();
   }
   if (!sb) return;
   btn.hidden = false;
@@ -393,5 +380,7 @@
     if (!ED.me) { loginPanel(); return; }
     ED.on = !ED.on; st.set("on", ED.on ? "1" : "0"); closeOpen(); drawBar(); C.render();
   });
-  sb.auth.onAuthStateChange((ev, session) => { if (ev === "INITIAL_SESSION" || ev === "SIGNED_IN" || ev === "SIGNED_OUT") setTimeout(() => onSession(session), 0); });
+  /* retoma a entrada guardada neste dispositivo, se o email continuar registado */
+  const saved = st.get("email", "");
+  if (saved) sb.rpc("goplan_cal_entrar", { p_email: saved }).then(({ data }) => { if (data) entrar(saved, data); else st.set("email", ""); });
 })();

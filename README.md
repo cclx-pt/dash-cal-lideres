@@ -28,12 +28,12 @@ Para usar um subdomínio (ex.: `calendario.cclx.pt`): em Settings › Pages › 
 
 ## Modo edição
 
-1. **Acesso:** o CL regista os líderes (email e ministérios) na tabela `goplan_calendar_lideres`. Não há pedido de acesso na página.
-2. **Entrada:** o líder carrega em *✎ Modo edição*, escreve o email e recebe um código e um link de entrada.
+1. **Acesso:** o CL regista os líderes (email, nome e ministérios) na tabela `goplan_calendar_lideres`.
+2. **Entrada:** o líder carrega em *Propor datas* e escreve o email registado. Não há código nem palavra-passe; o email fica guardado nesse dispositivo até carregar em *Sair*.
 3. **Propor:** com o modo edição ligado, o líder escolhe o ministério e usa *+ Propor data nesta semana*, ou *Mudar data* / *Retirar* num evento. Na linha do tempo (com um mês escolhido) toca num dia vazio da linha do ministério. Os avisos das regras aparecem enquanto escolhe a data.
 4. **Decisão:** o CL aceita, recusa ou pede outra data, com nota. As aceites são depois importadas para a página de gestão e entram no `data.json`.
 
-Dados no Supabase (organização GoPlan, projeto `dash-cal`): tabelas `goplan_calendar` (propostas) e `goplan_calendar_lideres` (quem pode propor e para que ministérios), todas com regras de acesso (RLS). A página usa só a chave pública.
+Dados no Supabase (organização GoPlan, projeto `dash-cal`): tabelas `goplan_calendar` (propostas) e `goplan_calendar_lideres` (quem pode propor e para que ministérios), todas com regras de acesso (RLS). A página usa só a chave pública e não lê as tabelas diretamente: tudo passa por funções no Supabase que confirmam o email registado e os ministérios (`goplan_cal_entrar`, `goplan_cal_propostas`, `goplan_cal_propor`, `goplan_cal_cancelar`, `goplan_cal_decidir`, `goplan_cal_lideres`, `goplan_cal_lider_ativo`).
 
 ## Notas
 
