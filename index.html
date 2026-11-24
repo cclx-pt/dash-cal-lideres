@@ -262,6 +262,11 @@ li.it.ed-mov > .dt, li.it.ed-mov .ti { opacity: .55 }
 .tl-it.lpo { opacity: .4 } .tl-it.lpr { text-decoration: line-through; opacity: .5 }
 li.it.ed-ret .ti { text-decoration: line-through; text-decoration-color: var(--prop); opacity: .7 }
 .tag.sent { cursor: pointer }
+.tag.upd { background: var(--ok-bg); color: var(--ok) }
+.ed-clsec { padding-block: 10px 20px }
+.ed-clh { font-family: var(--display); font-size: 19px; margin: 6px 0 10px }
+.ed-sec { padding: 10px 0 0 }
+.ed-clsec .ed-tabs { margin: 0 }
 li.it.ed-pr { cursor: pointer; border: 1.5px dashed var(--prop); border-radius: 8px; padding: 8px; margin: 6px 0 } li.it.ed-pr .ti { font-style: italic }
 li.it.ed-pr + li.it { border-top: 0 }
 .ed-pinfo { font-size: 12.5px; color: var(--prop); background: var(--prop-bg); border-radius: 8px; padding: 6px 9px; margin-top: 6px }
@@ -335,7 +340,7 @@ li.it.ed-pr + li.it { border-top: 0 }
 </div>
 
 <main class="wrap">
-  <div class="meta"><div class="vseg" role="group" aria-label="Vista"><button type="button" data-v="meses" aria-pressed="true">Meses</button><button type="button" data-v="tl" aria-pressed="false">Linha do tempo</button></div><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
+  <div class="meta"><div class="vseg" role="group" aria-label="Vista"><button type="button" data-v="meses" aria-pressed="true">Meses</button><button type="button" data-v="tl" aria-pressed="false">Linha do tempo</button><button type="button" data-v="prop" aria-pressed="false" id="vProp" hidden>Propostas</button></div><span id="count">A carregar as datas…</span><button type="button" id="clear">Limpar filtros</button></div>
   <div class="edbar" id="edbar" hidden></div>
   <nav class="months" id="months" aria-label="Mês"></nav>
   <div id="out"><div class="empty">A carregar o calendário…</div></div>
@@ -353,7 +358,28 @@ li.it.ed-pr + li.it { border-top: 0 }
   const P = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today = iso(new Date());
-  let DATA = null, mes = "", vista = "meses";
+  let DATA = null, BASE = null, OVER = [], mes = "", vista = "meses";
+  function applyOverlay() {
+    if (!BASE) return;
+    const datas = BASE.datas.map(r => Object.assign({}, r));
+    const byId = new Map(datas.map(r => [r.id, r]));
+    const gone = new Set();
+    for (const p of OVER) {
+      if (p.tipo === "nova") {
+        const r = { id: "prop-" + p.id, k: "geral", m: p.ministerio, v: p.visibilidade || "publico", e: "aprovada", a: p.ambito || "Igreja", h: p.hora || "", i: p.data_inicio, f: p.data_fim || "", t: p.titulo || "(sem título)", upd: true };
+        if (p.ambito === "Comunidade" && p.comunidade) { r.c = p.comunidade; r.co = [p.comunidade]; }
+        datas.push(r); byId.set(r.id, r);
+      } else {
+        const r = byId.get(p.evento_id); if (!r) continue;
+        if (p.tipo === "retirar") { gone.add(r.id); continue; }
+        if (p.data_inicio) { r.i = p.data_inicio; r.f = p.data_fim || ""; }
+        if (p.titulo) r.t = p.titulo;
+        if (p.hora != null) r.h = p.hora;
+        r.upd = true;
+      }
+    }
+    DATA = Object.assign({}, BASE, { datas: datas.filter(r => !gone.has(r.id)) });
+  }
   const isMon = () => mes.length === 7;
   const perMeses = () => !mes ? ORDER : mes.length === 4 ? ORDER.filter(k => k.startsWith(mes)) : [mes];
   const perTxt = () => !mes ? "" : isMon() ? ` em ${MES[+mes.slice(5) - 1].toLowerCase()} ${mes.slice(0, 4)}` : ` em ${mes}`;
@@ -410,9 +436,9 @@ li.it.ed-pr + li.it { border-top: 0 }
     for (const id of SHOW) { const v = st.get(id, null); if (v !== null) $(id).checked = v === "1"; $(id).addEventListener("change", e => { st.set(id, e.target.checked ? "1" : "0"); render(); }); }
     $("q").addEventListener("input", render);
     vista = st.get("vista", "meses") === "tl" ? "tl" : "meses";
-    document.querySelectorAll(".vseg button").forEach(b => {
+    document.querySelectorAll(".meta .vseg button").forEach(b => {
       b.setAttribute("aria-pressed", String(b.dataset.v === vista));
-      b.addEventListener("click", () => { vista = b.dataset.v; st.set("vista", vista); document.querySelectorAll(".vseg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === vista))); render(); });
+      b.addEventListener("click", () => { vista = b.dataset.v; if (vista !== "prop") st.set("vista", vista); document.querySelectorAll(".meta .vseg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === vista))); render(); });
     });
     let rz = 0; window.addEventListener("resize", () => { if (vista !== "tl") return; clearTimeout(rz); rz = setTimeout(render, 150); });
     $("clear").addEventListener("click", () => {
@@ -668,6 +694,8 @@ li.it.ed-pr + li.it { border-top: 0 }
       return false;
     });
     const gcs = showGc && !q ? DATA.datas.filter(r => r.k === "gc" && (showPast || (r.f || r.i) >= today)) : [];
+    $("months").hidden = vista === "prop";
+    if (vista === "prop") { if (window.ED && window.ED.renderProp && window.ED.lider) { $("count").textContent = ""; window.ED.renderProp($("out")); spy(); return; } vista = "meses"; }
     if (vista === "tl") { renderTL(ev, side, gcs); spy(); return; }
     const months = perMeses();
     const out = $("out"); out.replaceChildren();
@@ -710,6 +738,7 @@ li.it.ed-pr + li.it { border-top: 0 }
           if (r.co && r.a !== "Comunidade" && !r.rg) tags.append(el("span", { class: "tag", text: r.co.join(", ") }));
           if (r.a === "Comunidade") tags.append(el("span", { class: "tag", text: "Local · " + (r.c || "comunidade") }));
           if (r.h) tags.append(el("span", { class: "tag", text: r.h }));
+          if (r.upd) tags.append(el("span", { class: "tag upd", text: "Atualizado" }));
           const li = el("li", { class: cls.join(" "), "data-i": r.i }, dateCell(r), el("div", { class: "tx" }, el("div", { class: "ti", text: r.t }), tags));
           ul.append(li); if (edSess()) window.ED.item(li, r);
         }
@@ -801,7 +830,10 @@ li.it.ed-pr + li.it { border-top: 0 }
     window.claude.use("room").then(r => { if (!r) return; room = r; r.presence({ vista: "consulta" }).catch(() => {}); r.onPeers(() => renderOnline(), () => { room = null; renderOnline(); }); renderOnline(); }).catch(() => {});
   }
 
-  window.CCLX = { dateCell, el, P, iso, MC, DS, MES, MCOL, today, $, render: () => DATA && render(), DATA: () => DATA };
+  window.CCLX = { dateCell, el, P, iso, MC, DS, MES, MCOL, today, $, render: () => DATA && render(), DATA: () => DATA,
+    setOverlay: list => { OVER = list || []; applyOverlay(); if (DATA) render(); },
+    vista: () => vista,
+    setVista: v => { vista = v; if (v !== "prop") st.set("vista", v); document.querySelectorAll(".meta .vseg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === vista))); if (DATA) render(); window.scrollTo({ top: 0 }); } };
   const edOn = () => !!(window.ED && window.ED.on && window.ED.lider);
   const edSess = () => !!(window.ED && window.ED.me);
   if (/(^|\.)github\.io$|(^|\.)cclx\.pt$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
@@ -833,6 +865,7 @@ li.it.ed-pr + li.it { border-top: 0 }
         if (!has.has(s2)) d.datas.push({ k: "geral", i: s2, f: "", t: "Culto de domingo", m: "Geral", v: "publico", e: "aprovada", a: "Igreja", cel: true });
       }
     }
+    BASE = d; applyOverlay();
     $("upd").textContent = "atualizado a " + d.atualizado;
     mes = st.get("mes", "");
     if (mes && !ORDER.includes(mes) && !(mes.length === 4 && ORDER.some(k => k.startsWith(mes)))) mes = "";

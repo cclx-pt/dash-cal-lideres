@@ -64,11 +64,14 @@
     closeOpen();
     const box = el("form", { class: "ed-form", novalidate: "" });
     const r = ctx.r;
-    const head = kind === "nova" ? "Propor nova data" : kind === "mudar" ? "Propor mudança de data" : "Propor retirar do calendário";
+    const direct = isCL();
+    const head = direct ? (kind === "nova" ? "Adicionar evento" : kind === "mudar" ? "Editar evento" : "Eliminar evento")
+      : kind === "nova" ? "Propor nova data" : kind === "mudar" ? "Propor mudança de data" : "Propor retirar do calendário";
     box.append(el("div", { class: "ed-fh" }, el("b", { text: head }), r ? el("span", { text: ` · ${r.t} · ${fmtR(r.i, r.f)}` }) : null));
     const inp = (type, attrs) => el("input", Object.assign({ type }, attrs || {}));
     let tTitulo, tIni, tFim, tHora, tAmb, tCom, tVis, tMin, tMot;
     const grid = el("div", { class: "ed-grid" });
+    if (kind === "mudar" && direct) { tTitulo = inp("text", { maxlength: "120", value: r.t }); grid.append(field("Título", tTitulo)); }
     if (kind === "nova") {
       if (!ED.min) { tMin = el("select", {}); for (const m of myMins()) tMin.append(el("option", { value: m, text: m })); grid.append(field("Ministério", tMin)); }
       tTitulo = inp("text", { maxlength: "120", required: "", placeholder: "Ex.: Encontro de líderes" }); grid.append(field("Título", tTitulo));
@@ -92,7 +95,7 @@
       grid.append(field("Âmbito", tAmb), fc, field("Visibilidade", tVis));
     }
     box.append(grid);
-    if (kind === "retirar") {
+    if (kind === "retirar" && !direct) {
       const go = el("button", { type: "button", class: "ed-link", text: "Mudar data" });
       go.addEventListener("click", () => {
         const wrap = box.closest(".ed-li"), prev = wrap ? wrap.previousElementSibling : null, par = box.parentNode;
@@ -102,14 +105,15 @@
       });
       box.append(el("div", { class: "ed-tip" }, "Quer passar para outro dia? Use ", go, ". Assim o CL decide a mudança de uma só vez."));
     }
-    tMot = el("textarea", { rows: "2", maxlength: "600", placeholder: kind === "nova" ? "Para quem é, o que é, notas para o CL" : "Porque propõe esta alteração" });
-    box.append(field(kind === "nova" ? "Descrição e notas" : "Motivo", tMot));
+    tMot = el("textarea", { rows: "2", maxlength: "600", placeholder: direct ? "Opcional: nota para o registo" : kind === "nova" ? "Para quem é, o que é, notas para o CL" : "Porque propõe esta alteração" });
+    box.append(field(direct ? "Nota (opcional)" : kind === "nova" ? "Descrição e notas" : "Motivo", tMot));
     let av = avBox([]); box.append(av);
     const upd = () => { if (kind === "retirar") { av.replaceWith(av = el("div")); return; } const n = avBox(avisos(tIni.value, tFim.value, r && r.id)); av.replaceWith(n); av = n; };
     if (tIni) { tIni.addEventListener("input", upd); tFim.addEventListener("input", upd); }
     upd();
     const msg = el("div", { class: "ed-msg", role: "status" });
-    const send = el("button", { type: "submit", class: "ed-btn pri", text: "Enviar proposta" });
+    const sendTxt = direct ? (kind === "retirar" ? "Eliminar" : "Guardar") : "Enviar proposta";
+    const send = el("button", { type: "submit", class: "ed-btn pri", text: sendTxt });
     const cancel = el("button", { type: "button", class: "ed-btn", text: "Cancelar" });
     cancel.addEventListener("click", closeOpen);
     box.append(el("div", { class: "ed-act" }, send, cancel, msg));
@@ -121,24 +125,24 @@
         if (!row.titulo) { msg.textContent = "Escreva o título."; tTitulo.focus(); return; }
         row.ambito = tAmb.value; row.comunidade = tAmb.value === "Comunidade" ? tCom.value : null; row.visibilidade = tVis.value;
       } else {
-        Object.assign(row, { ministerio: r.m, evento_id: r.id, evento_titulo: r.t, data_atual: r.i, data_atual_fim: r.f || null, titulo: r.t });
-        if (!row.motivo) { msg.textContent = "Escreva o motivo."; tMot.focus(); return; }
+        Object.assign(row, { ministerio: r.m, evento_id: r.id, evento_titulo: r.t, data_atual: r.i, data_atual_fim: r.f || null, titulo: tTitulo ? (tTitulo.value.trim() || r.t) : r.t });
+        if (!row.motivo && !direct) { msg.textContent = "Escreva o motivo."; tMot.focus(); return; }
       }
       if (tIni) {
         if (!tIni.value) { msg.textContent = "Escolha a data."; tIni.focus(); return; }
         if (tFim.value && tFim.value < tIni.value) { msg.textContent = "A data final é antes da inicial."; tFim.focus(); return; }
-        if (kind === "mudar" && tIni.value === r.i && (tFim.value || "") === (r.f || "")) { msg.textContent = "A nova data é igual à atual."; return; }
+        if (kind === "mudar" && tIni.value === r.i && (tFim.value || "") === (r.f || "") && row.titulo === r.t && (tHora.value.trim() || "") === (r.h || "")) { msg.textContent = direct ? "Não há nada alterado." : "A nova data é igual à atual."; return; }
         row.data_inicio = tIni.value; row.data_fim = tFim.value || null; row.hora = tHora.value.trim() || null;
         const avs = avisos(tIni.value, tFim.value, r && r.id);
         const er = avs.find(x => x[0] === "erro"); if (er) { msg.textContent = er[1]; tIni.focus(); return; }
         row.avisos = avs.map(x => x[1]);
       }
-      send.disabled = true; send.textContent = "A enviar…";
-      const { error } = await rpc("goplan_cal_propor", { p: row });
-      send.disabled = false; send.textContent = "Enviar proposta";
+      send.disabled = true; send.textContent = direct ? "A guardar…" : "A enviar…";
+      const { error } = await rpc(direct ? "goplan_cal_cl_aplicar" : "goplan_cal_propor", { p: row });
+      send.disabled = false; send.textContent = sendTxt;
       if (error) { msg.textContent = /permiss|acesso/i.test(error.message) ? "Não tem permissão para propor neste ministério." : "Não foi possível enviar. Tente de novo."; return; }
-      closeOpen(); await loadMine(); C.render();
-      toast("Proposta enviada ao CL. Pode acompanhar em «As minhas propostas».");
+      closeOpen(); await loadMine(); if (direct) await loadOverlay(); C.render();
+      toast(direct ? (kind === "retirar" ? "Eliminado. Já não aparece no calendário." : "Guardado. Já aparece no calendário.") : "Proposta enviada ao CL. Pode acompanhar em «As minhas propostas».");
     });
     ED.open = box;
     return box;
@@ -169,8 +173,8 @@
     }
     if (!ED.on || !canEdit(r)) return;
     const a = el("div", { class: "ed-row" });
-    const b1 = el("button", { type: "button", class: "ed-link", text: "Mudar data" });
-    const b2 = el("button", { type: "button", class: "ed-link", text: "Retirar" });
+    const b1 = el("button", { type: "button", class: "ed-link", text: isCL() ? "Editar" : "Mudar data" });
+    const b2 = el("button", { type: "button", class: "ed-link", text: isCL() ? "Eliminar" : "Retirar" });
     b1.addEventListener("click", () => { const f = form("mudar", { r }); li.after(el("li", { class: "ed-li" }, f)); ED.open = f.parentNode; f.querySelector("input,textarea")?.focus(); });
     b2.addEventListener("click", () => { const f = form("retirar", { r }); li.after(el("li", { class: "ed-li" }, f)); ED.open = f.parentNode; f.querySelector("textarea")?.focus(); });
     a.append(b1, b2); tx.append(a);
@@ -192,7 +196,7 @@
       }
     }
     if (!ED.on || !ED.lider || !myMins().length) return;
-    const b = el("button", { type: "button", class: "ed-add", text: "+ Propor data nesta semana" });
+    const b = el("button", { type: "button", class: "ed-add", text: isCL() ? "+ Adicionar evento nesta semana" : "+ Propor data nesta semana" });
     b.addEventListener("click", () => { const f = form("nova", ctx); b.after(f); f.querySelector("select,input")?.focus(); });
     col.append(b);
   };
@@ -205,8 +209,8 @@
   ED.det = (det, r) => {
     if (!ED.on || !canEdit(r)) return;
     const a = el("div", { class: "ed-row" });
-    const b1 = el("button", { type: "button", class: "ed-link", text: "Mudar data" });
-    const b2 = el("button", { type: "button", class: "ed-link", text: "Retirar" });
+    const b1 = el("button", { type: "button", class: "ed-link", text: isCL() ? "Editar" : "Mudar data" });
+    const b2 = el("button", { type: "button", class: "ed-link", text: isCL() ? "Eliminar" : "Retirar" });
     b1.addEventListener("click", () => { det.append(form("mudar", { r })); });
     b2.addEventListener("click", () => { det.append(form("retirar", { r })); });
     a.append(b1, b2); det.append(a);
@@ -215,7 +219,7 @@
   ED.tlNew = (det, dia, m) => {
     if (!ED.on || !ED.lider || !(ED.min ? m === ED.min : myMins().includes(m))) return false;
     const prev = ED.min; if (!ED.min) ED.min = m;
-    det.replaceChildren(el("div", {}, el("b", { text: `Novo evento · ${m}` }), " · " + fmt(dia)), form("nova", { dia }));
+    det.replaceChildren(el("div", {}, el("b", { text: `${isCL() ? "Adicionar evento" : "Novo evento"} · ${m}` }), " · " + fmt(dia)), form("nova", { dia }));
     ED.min = prev;
     return true;
   };
@@ -287,17 +291,19 @@
     (email ? nm : em).focus();
   }
   /* as minhas propostas */
-  const EST = { pendente: "Pendente", aceite: "Aceite", recusada: "Recusada", outra_data: "Pedida outra data", cancelada: "Cancelada" };
+  const EST = { pendente: "Pendente", aceite: "Aprovada", recusada: "Rejeitada", outra_data: "Pedida outra data", cancelada: "Cancelada" };
   const TIPO = { nova: "Nova data", mudar: "Mudar data", retirar: "Retirar" };
+  const TIPO_CL = { nova: "Adicionado pelo CL", mudar: "Editado pelo CL", retirar: "Eliminado pelo CL" };
   function propCard(p, actions) {
     const what = p.tipo === "nova" ? `${p.titulo} · ${fmtR(p.data_inicio, p.data_fim)}` : p.tipo === "mudar" ? `${p.evento_titulo} · de ${fmtR(p.data_atual, p.data_atual_fim)} para ${fmtR(p.data_inicio, p.data_fim)}` : `${p.evento_titulo} · ${fmtR(p.data_atual, p.data_atual_fim)}`;
     const c = el("div", { class: "ed-card" },
-      el("div", { class: "ed-ch" }, el("span", { class: "tag min", text: p.ministerio, style: `--mc:${MCOL[p.ministerio] || "#8a8a86"}` }), el("span", { class: "tag", text: TIPO[p.tipo] }), el("span", { class: "tag est-" + p.estado, text: EST[p.estado] })),
+      el("div", { class: "ed-ch" }, el("span", { class: "tag min", text: p.ministerio, style: `--mc:${MCOL[p.ministerio] || "#8a8a86"}` }), el("span", { class: "tag", text: (p.origem === "cl" ? TIPO_CL : TIPO)[p.tipo] }), el("span", { class: "tag est-" + p.estado, text: EST[p.estado] + (p.estado === "aceite" ? (p.importado_em ? " · importada" : " · já no site") : "") })),
       el("div", { class: "ed-cw", text: what }),
       p.hora ? el("div", { class: "ed-cs", text: "Hora: " + p.hora }) : null,
-      p.motivo ? el("div", { class: "ed-cs", text: (p.tipo === "nova" ? "Notas: " : "Motivo: ") + p.motivo }) : null,
+      p.tipo === "mudar" && p.titulo && p.titulo !== p.evento_titulo ? el("div", { class: "ed-cs", text: "Novo título: " + p.titulo }) : null,
+      p.motivo ? el("div", { class: "ed-cs", text: (p.tipo === "nova" ? "Notas: " : p.origem === "cl" ? "Nota: " : "Motivo: ") + p.motivo }) : null,
       (p.avisos || []).length ? el("div", { class: "ed-cs ed-cav", text: "Avisos: " + p.avisos.join(" ") }) : null,
-      el("div", { class: "ed-cs", text: `${p.nome || p.email} · ${new Date(p.criado_em).toLocaleDateString("pt-PT")}` }),
+      el("div", { class: "ed-cs", text: `${p.nome || p.email} · ${new Date(p.criado_em).toLocaleDateString("pt-PT")}${p.decidido_por && p.origem !== "cl" ? ` · decidido por ${p.decidido_por}` : ""}` }),
       p.nota_cl ? el("div", { class: "ed-cs ed-cnota", text: "Nota do CL: " + p.nota_cl }) : null);
     if (actions) c.append(actions);
     return c;
@@ -319,22 +325,25 @@
   }
 
   /* CL: propostas e pedidos de acesso */
-  async function clPanel(tab) {
-    tab = tab || "prop";
+  let clTab = "prop";
+  ED.renderProp = host => clPanel(clTab, host);
+  async function clPanel(tab, host) {
+    tab = tab || clTab; clTab = tab; host = host || $("out");
+    if (!isCL()) { host.replaceChildren(el("div", { class: "empty", text: "Só o CL vê esta secção." })); return; }
     const tabs = el("div", { class: "vseg ed-tabs" });
-    for (const [k, t] of [["prop", "Propostas"], ["lid", "Líderes e pedidos"]]) {
+    for (const [k, t] of [["prop", "Propostas"], ["lid", "Líderes e pedidos de acesso"]]) {
       const b = el("button", { type: "button", "aria-pressed": String(k === tab), text: t }); b.addEventListener("click", () => clPanel(k)); tabs.append(b);
     }
-    const body = el("div", { class: "ed-list" }, el("p", { class: "ed-empty", text: "A carregar…" }));
-    panel("Conselho de Liderança", tabs, body);
+    const body = el("div", { class: "ed-list ed-sec" }, el("p", { class: "ed-empty", text: "A carregar…" }));
+    host.replaceChildren(el("section", { class: "ed-clsec" }, el("h2", { class: "ed-clh", text: "Conselho de Liderança" }), tabs, body));
     if (tab === "prop") {
       const flt = st.get("clEst", "pendente");
       const { data, error } = await rpc("goplan_cal_propostas");
       body.replaceChildren();
       if (error) { body.append(el("p", { class: "ed-empty", text: "Não foi possível carregar." })); return; }
-      const sel = el("select", { "aria-label": "Estado" }); for (const [v, t] of [["pendente", "Pendentes"], ["aceite", "Aceites (por importar)"], ["", "Todas"]]) sel.append(el("option", { value: v, text: t }));
+      const sel = el("select", { "aria-label": "Estado" }); for (const [v, t] of [["pendente", "Por decidir"], ["aceite", "Aprovadas (por importar)"], ["recusada", "Rejeitadas"], ["", "Todas"]]) sel.append(el("option", { value: v, text: t }));
       sel.value = flt; sel.addEventListener("change", () => { st.set("clEst", sel.value); clPanel("prop"); });
-      body.append(el("div", { class: "ed-row" }, sel, el("span", { class: "ed-cs", text: "As aceites entram no calendário quando forem importadas para a página de gestão." })));
+      body.append(el("div", { class: "ed-row" }, sel, el("span", { class: "ed-cs", text: "O que aprova aparece logo no calendário do site. Fica guardado na página de gestão quando pedir «importar alterações»." })));
       const rows = data.filter(p => !flt ? true : flt === "aceite" ? p.estado === "aceite" && !p.importado_em : p.estado === flt);
       if (!rows.length) body.append(el("p", { class: "ed-empty", text: "Nada por aqui." }));
       for (const p of rows) {
@@ -344,8 +353,13 @@
           const mk = (t, est, cls) => { const b = el("button", { type: "button", class: "ed-btn " + (cls || ""), text: t }); b.addEventListener("click", async () => {
             if (est !== "aceite" && !nota.value.trim()) { nota.focus(); nota.placeholder = "Escreva a nota para o líder"; return; }
             b.disabled = true; const { error: e2 } = await rpc("goplan_cal_decidir", { p_id: p.id, p_estado: est, p_nota: nota.value.trim() });
-            if (e2) { b.disabled = false; toast("Não foi possível guardar."); return; } toast(EST[est] + "."); await loadMine(); C.render(); clPanel("prop"); }); return b; };
-          act = el("div", { class: "ed-dec" }, nota, el("div", { class: "ed-row" }, mk("Aceitar", "aceite", "pri"), mk("Pedir outra data", "outra_data"), mk("Recusar", "recusada")));
+            if (e2) { b.disabled = false; toast("Não foi possível guardar."); return; } toast(EST[est] + "."); await loadMine(); await loadOverlay(); drawBar(); C.render(); }); return b; };
+          nota.placeholder = "Nota para o líder (obrigatória ao rejeitar ou pedir outra data)";
+          act = el("div", { class: "ed-dec" }, nota, el("div", { class: "ed-row" }, mk("Aprovar", "aceite", "pri"), mk("Rejeitar", "recusada"), mk("Pedir outra data", "outra_data")));
+        } else if (p.estado === "aceite" && !p.importado_em) {
+          const u = el("button", { type: "button", class: "ed-link", text: p.origem === "cl" ? "Anular esta alteração" : "Anular aprovação (volta a pendente)" });
+          u.addEventListener("click", async () => { u.disabled = true; const { error: e4 } = await rpc("goplan_cal_anular", { p_id: p.id }); if (e4) { u.disabled = false; toast("Não foi possível anular."); return; } toast("Anulado."); await loadMine(); await loadOverlay(); drawBar(); C.render(); });
+          act = el("div", { class: "ed-row" }, u);
         }
         body.append(propCard(p, act));
       }
@@ -375,12 +389,18 @@
 
   /* ---------- barra do modo edição ---------- */
   const btn = $("btnEd"), bar = $("edbar");
+  async function loadOverlay() {
+    const { data, error } = await sb.rpc("goplan_cal_aplicadas");
+    if (!error) C.setOverlay(data || []);
+  }
+  ED.reloadOverlay = loadOverlay;
   async function loadMine() {
     if (!ED.me) { ED.mine = []; return; }
     const { data } = await rpc("goplan_cal_propostas");
     const all = data || [];
     ED.mine = all.filter(p => p.email === ED.me.email);
     ED.props = all.filter(p => p.estado === "pendente");
+    const vb = $("vProp"); if (vb) { vb.hidden = !isCL(); vb.textContent = `Propostas${ED.props.length ? " (" + ED.props.length + ")" : ""}`; }
   }
   function drawBar() {
     btn.setAttribute("aria-pressed", String(ED.on));
@@ -400,10 +420,10 @@
     const mine = el("button", { type: "button", class: "ed-btn", text: `As minhas propostas${ED.mine.filter(p => p.estado === "pendente").length ? " (" + ED.mine.filter(p => p.estado === "pendente").length + ")" : ""}` });
     mine.addEventListener("click", minePanel);
     bar.append(el("span", { class: "ed-who", text: ED.lider.nome || ED.me.email }), el("label", { class: "ed-sel" }, el("span", { text: "A editar:" }), sel), mine);
-    if (isCL()) { const cl = el("button", { type: "button", class: "ed-btn", text: "CL: propostas" }); cl.addEventListener("click", () => clPanel()); bar.append(cl); }
+    if (isCL()) { const cl = el("button", { type: "button", class: "ed-btn", text: `Propostas por decidir (${ED.props.length})` }); cl.addEventListener("click", () => C.setVista("prop")); bar.append(cl); }
     const out = el("button", { type: "button", class: "ed-link", text: "Sair" }); out.addEventListener("click", sair);
     bar.append(out);
-    bar.append(el("div", { class: "ed-hint", text: "Toque em «+ Propor data nesta semana» ou em «Mudar data» / «Retirar» num evento. Na linha do tempo, toque num dia vazio da linha do ministério." }));
+    bar.append(el("div", { class: "ed-hint", text: isCL() ? "Modo CL: «+ Adicionar evento nesta semana», ou «Editar» / «Eliminar» num evento. Fica logo no calendário do site. As propostas dos líderes estão em «Propostas»." : "Toque em «+ Propor data nesta semana» ou em «Mudar data» / «Retirar» num evento. Na linha do tempo, toque num dia vazio da linha do ministério." }));
   }
   async function entrar(email, lid) {
     ED.me = { email }; ED.lider = lid ? { ...lid, ministerios: lid.ministerios || [] } : null;
@@ -415,6 +435,7 @@
   }
   function sair() {
     st.set("email", ""); ED.me = null; ED.lider = null; ED.on = false; ED.mine = []; ED.props = [];
+    const vb = $("vProp"); if (vb) vb.hidden = true; if (C.vista() === "prop") C.setVista("meses");
     closeOpen(); drawBar(); C.render();
   }
   if (!sb) return;
@@ -423,6 +444,8 @@
     if (!ED.me) { loginPanel(); return; }
     ED.on = !ED.on; st.set("on", ED.on ? "1" : "0"); closeOpen(); drawBar(); C.render();
   });
+  /* alterações aprovadas ainda não importadas: aplicadas para todos os visitantes */
+  loadOverlay();
   /* retoma a entrada guardada neste dispositivo, se o email continuar registado */
   const saved = st.get("email", "");
   if (saved) sb.rpc("goplan_cal_entrar", { p_email: saved }).then(({ data }) => { if (data) entrar(saved, data); else st.set("email", ""); });
