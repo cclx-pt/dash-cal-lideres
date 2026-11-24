@@ -28,7 +28,7 @@ Para usar um subdomínio (ex.: `calendario.cclx.pt`): em Settings › Pages › 
 
 ## Modo edição
 
-1. **Acesso:** o CL regista os líderes (email, nome e ministérios) na tabela `goplan_calendar_lideres`.
+1. **Acesso:** se o email não estiver registado, a página pede nome e ministério(s) e cria o pedido em `goplan_calendar_lideres` como inativo. O CL aprova pondo `ativo` = true no Supabase, ou em *CL: propostas › Líderes e pedidos › Ativar*.
 2. **Entrada:** o líder carrega em *Propor datas* e escreve o email registado. Não há código nem palavra-passe; o email fica guardado nesse dispositivo até carregar em *Sair*.
 3. **Propor:** com o modo edição ligado, o líder escolhe o ministério e usa *+ Propor data nesta semana*, ou *Mudar data* / *Retirar* num evento. Na linha do tempo (com um mês escolhido) toca num dia vazio da linha do ministério. Os avisos das regras aparecem enquanto escolhe a data.
 4. **Decisão:** o CL aceita, recusa ou pede outra data, com nota. As aceites são depois importadas para a página de gestão e entram no `data.json`.
