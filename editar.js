@@ -315,7 +315,7 @@
   }
   function drawBar() {
     btn.setAttribute("aria-pressed", String(ED.on));
-    btn.textContent = ED.on ? "✎ Modo edição: ligado" : "✎ Modo edição";
+    $("btnEdT").textContent = ED.on ? "A propor datas" : "Propor datas";
     document.body.classList.toggle("ed-on", ED.on);
     if (!ED.on) { bar.hidden = true; bar.replaceChildren(); return; }
     bar.hidden = false; bar.replaceChildren();
