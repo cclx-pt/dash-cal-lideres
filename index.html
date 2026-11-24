@@ -293,10 +293,10 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
         </div>
       </details>
       <select id="fAmb" aria-label="Âmbito">
-        <option value="">Toda a igreja e locais</option>
-        <option value="Igreja">Toda a igreja</option>
-        <option value="Regional">Regional</option>
-        <option value="Comunidade">Locais de comunidade</option>
+        <option value="Igreja">Âmbito: Geral</option>
+        <option value="Regional">Âmbito: Regional</option>
+        <option value="Comunidade">Âmbito: Local</option>
+        <option value="">Âmbito: todos</option>
       </select>
       <select id="fEst" aria-label="Estado">
         <option value="">Aprovadas e propostas</option>
@@ -384,7 +384,9 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
     mins.forEach((m, i) => $("fMinPop").append(el("label", {}, el("input", { type: "checkbox", class: "fMinOpt", id: "fMin-" + i, value: m }), " " + m)));
     initMin();
     initCom();
-    for (const id of ["fAmb", "fEst"]) { $(id).value = st.get(id, ""); $(id).addEventListener("change", e => { st.set(id, e.target.value); render(); }); }
+    const DEF = { fAmb: "Igreja", fEst: "" };
+    if (st.get("ambV", "") !== "2") { st.set("fAmb", "Igreja"); st.set("ambV", "2"); }
+    for (const id of ["fAmb", "fEst"]) { $(id).value = st.get(id, DEF[id]); $(id).addEventListener("change", e => { st.set(id, e.target.value); render(); }); }
     const old = st.get("fTipo", "");
     if (old === "com" || old === "tudo") st.set("tInt", "1");
     const SHOW = ["tPub", "tInt", "tGc", "tDom", "tTem", "tFer", "tPast"];
@@ -399,7 +401,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
     });
     let rz = 0; window.addEventListener("resize", () => { if (vista !== "tl") return; clearTimeout(rz); rz = setTimeout(render, 150); });
     $("clear").addEventListener("click", () => {
-      $("q").value = ""; for (const id of ["fAmb", "fEst"]) { $(id).value = ""; st.set(id, ""); }
+      $("q").value = ""; for (const id of ["fAmb", "fEst"]) { $(id).value = DEF[id]; st.set(id, DEF[id]); }
       setCom([]); setMin([]);
       const def = { tPub: true, tInt: false, tGc: true, tDom: true, tTem: true, tFer: true, tPast: true };
       for (const [id, v] of Object.entries(def)) { $(id).checked = v; st.set(id, v ? "1" : "0"); }
@@ -601,7 +603,7 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
       if (!showPast && (r.f || r.i) < today) return false;
       if (q && !r.t.toLowerCase().includes(q)) return false;
       if (fc.length && r.co && !r.co.some(x => fc.includes(x))) return false;
-      if (r.cel) return showDom && (!fm.length || fm.includes("Geral")) && !fa && fe !== "proposta";
+      if (r.cel) return showDom && (!fm.length || fm.includes("Geral")) && (!fa || fa === "Igreja") && fe !== "proposta";
       if (r.k === "geral") {
         if (r.v === "interno" && !showInt) return false;
         if (r.m === "GCs") { if (!showGc || !fm.includes("GCs")) return false; }

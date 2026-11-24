@@ -83,7 +83,7 @@
       }
     }
     if (kind === "nova") {
-      tAmb = el("select", {}); [["Igreja", "Toda a igreja"], ["Regional", "Regional"], ["Comunidade", "Local de uma comunidade"]].forEach(([v, t]) => tAmb.append(el("option", { value: v, text: t })));
+      tAmb = el("select", {}); [["Igreja", "Geral"], ["Regional", "Regional"], ["Comunidade", "Local (uma comunidade)"]].forEach(([v, t]) => tAmb.append(el("option", { value: v, text: t })));
       tCom = el("select", {}); COMS.forEach(c => tCom.append(el("option", { value: c, text: c })));
       const fc = field("Comunidade", tCom); fc.hidden = true;
       tAmb.addEventListener("change", () => { fc.hidden = tAmb.value !== "Comunidade"; });
