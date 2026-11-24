@@ -737,7 +737,9 @@ body.ed-on .tl-row:not(.tl-head) { cursor: crosshair }
   if (/(^|\.)github\.io$|(^|\.)cclx\.pt$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
     const load = src => new Promise((ok, ko) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = ko; document.head.append(sc); });
     const ready = new Promise(ok => { const t = setInterval(() => { if (DATA) { clearInterval(t); ok(); } }, 50); });
-    load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js").then(() => ready).then(() => load("editar.js")).catch(() => {});
+    const eb = $("btnEd"); eb.hidden = false;
+    const fail = () => { if (!window.ED) eb.onclick = () => alert("Não foi possível carregar o modo edição. Verifique a ligação e recarregue a página."); };
+    load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js").then(() => ready).then(() => load("editar.js?v=2")).then(fail, fail);
   }
   fetch("data.json").then(r => r.json()).then(d => {
     DATA = d;
