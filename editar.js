@@ -196,9 +196,7 @@
     const em = el("input", { type: "email", autocomplete: "email", required: "", placeholder: "nome@exemplo.pt", value: pref || st.get("email", "") });
     const msg = el("div", { class: "ed-msg", role: "status" });
     const go = el("button", { type: "submit", class: "ed-btn pri", text: "Enviar código" });
-    const f = el("form", { class: "ed-pf" }, el("p", { text: "Para propor datas, entre com o seu email. Enviamos um código e um link de entrada para esse email." }), field("Email", em), el("div", { class: "ed-act" }, go, msg));
-    const req = el("button", { type: "button", class: "ed-link", text: "É a primeira vez? Pedir acesso" });
-    req.addEventListener("click", () => requestPanel(em.value));
+    const f = el("form", { class: "ed-pf" }, el("p", { text: "Para propor datas, entre com o email registado pelo CL. Enviamos um código e um link de entrada para esse email." }), field("Email", em), el("div", { class: "ed-act" }, go, msg));
     f.addEventListener("submit", async e => {
       e.preventDefault(); msg.textContent = "";
       const email = em.value.trim().toLowerCase();
@@ -206,13 +204,13 @@
       go.disabled = true; go.textContent = "A verificar…";
       const { data: ok, error: e1 } = await sb.rpc("goplan_cal_registado", { p_email: email });
       if (e1) { go.disabled = false; go.textContent = "Enviar código"; msg.textContent = "Não foi possível ligar. Tente de novo."; return; }
-      if (!ok) { go.disabled = false; go.textContent = "Enviar código"; requestPanel(email, "Este email ainda não tem acesso. Peça acesso ao CL:"); return; }
+      if (!ok) { go.disabled = false; go.textContent = "Enviar código"; msg.textContent = "Este email ainda não tem acesso ao modo edição. Fale com o CL."; return; }
       const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
       go.disabled = false; go.textContent = "Enviar código";
       if (error) { msg.textContent = /rate|seconds/i.test(error.message) ? "Pediu um código há pouco. Aguarde um minuto e tente de novo." : "Não foi possível enviar o código. Tente de novo."; return; }
       st.set("email", email); codePanel(email);
     });
-    panel("Entrar no modo edição", f, el("div", { class: "ed-foot" }, req));
+    panel("Entrar no modo edição", f);
     em.focus();
   }
   function codePanel(email) {
@@ -232,34 +230,6 @@
     panel("Código de entrada", f, el("div", { class: "ed-foot" }, back));
     code.focus();
   }
-  function requestPanel(pref, lead) {
-    const nm = el("input", { type: "text", autocomplete: "name", required: "", maxlength: "120" });
-    const em = el("input", { type: "email", autocomplete: "email", required: "", value: pref || "" });
-    const mins = el("div", { class: "ed-mins" });
-    for (const m of allMins()) mins.append(el("label", {}, el("input", { type: "checkbox", value: m }), " " + m));
-    const tx = el("textarea", { rows: "2", maxlength: "500", placeholder: "Opcional: que funções tem no ministério" });
-    const msg = el("div", { class: "ed-msg", role: "status" });
-    const go = el("button", { type: "submit", class: "ed-btn pri", text: "Pedir acesso" });
-    const f = el("form", { class: "ed-pf" }, el("p", { text: lead || "Primeira vez? Indique o nome, o email e o ministério que lidera. O CL aprova o pedido e depois recebe por email o código e o link para entrar." }),
-      field("Nome", nm), field("Email", em), el("fieldset", { class: "ed-fs" }, el("legend", { text: "Ministério(s) que lidera" }), mins), field("Mensagem para o CL", tx), el("div", { class: "ed-act" }, go, msg));
-    f.addEventListener("submit", async e => {
-      e.preventDefault(); msg.textContent = "";
-      const email = em.value.trim().toLowerCase(), nome = nm.value.trim(), ms = [...mins.querySelectorAll("input:checked")].map(x => x.value);
-      if (nome.length < 2) { msg.textContent = "Escreva o nome."; nm.focus(); return; }
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Escreva um email válido."; em.focus(); return; }
-      if (!ms.length) { msg.textContent = "Escolha pelo menos um ministério."; return; }
-      go.disabled = true; go.textContent = "A enviar…";
-      const { error } = await sb.from("goplan_calendar_pedidos").insert({ nome, email, ministerios: ms, mensagem: tx.value.trim() });
-      if (!error) { try { await sb.functions.invoke("goplan-cal-notificar", { body: { email } }); } catch (e2) {} }
-      go.disabled = false; go.textContent = "Pedir acesso";
-      if (error) { msg.textContent = /duplicate|unique/i.test(error.message) ? "Já existe um pedido pendente para este email. Aguarde a aprovação do CL." : "Não foi possível enviar o pedido. Tente de novo."; return; }
-      st.set("email", email);
-      panel("Pedido enviado", el("p", {}, "Obrigado, ", el("b", { text: nome }), ". O pedido foi enviado ao CL. Quando for aprovado, recebe em ", el("b", { text: email }), " um código e um link para entrar."));
-    });
-    panel("Pedir acesso ao modo edição", f);
-    (pref ? nm : em).focus();
-  }
-
   /* as minhas propostas */
   const EST = { pendente: "Pendente", aceite: "Aceite", recusada: "Recusada", outra_data: "Pedida outra data", cancelada: "Cancelada" };
   const TIPO = { nova: "Nova data", mudar: "Mudar data", retirar: "Retirar" };
@@ -296,7 +266,7 @@
   async function clPanel(tab) {
     tab = tab || "prop";
     const tabs = el("div", { class: "vseg ed-tabs" });
-    for (const [k, t] of [["prop", "Propostas"], ["ped", "Pedidos de acesso"], ["lid", "Líderes"]]) {
+    for (const [k, t] of [["prop", "Propostas"], ["lid", "Líderes"]]) {
       const b = el("button", { type: "button", "aria-pressed": String(k === tab), text: t }); b.addEventListener("click", () => clPanel(k)); tabs.append(b);
     }
     const body = el("div", { class: "ed-list" }, el("p", { class: "ed-empty", text: "A carregar…" }));
@@ -322,31 +292,6 @@
           act = el("div", { class: "ed-dec" }, nota, el("div", { class: "ed-row" }, mk("Aceitar", "aceite", "pri"), mk("Pedir outra data", "outra_data"), mk("Recusar", "recusada")));
         }
         body.append(propCard(p, act));
-      }
-    } else if (tab === "ped") {
-      const { data, error } = await sb.from("goplan_calendar_pedidos").select("*").eq("estado", "pendente").order("criado_em");
-      body.replaceChildren();
-      if (error) { body.append(el("p", { class: "ed-empty", text: "Não foi possível carregar." })); return; }
-      if (!data.length) body.append(el("p", { class: "ed-empty", text: "Não há pedidos de acesso pendentes." }));
-      for (const q of data) {
-        const mins = el("div", { class: "ed-mins" });
-        for (const m of allMins()) mins.append(el("label", {}, el("input", { type: "checkbox", value: m, ...(q.ministerios.includes(m) ? { checked: "" } : {}) }), " " + m));
-        const pap = el("select", {}); pap.append(el("option", { value: "lider", text: "Líder (propõe para os ministérios escolhidos)" }), el("option", { value: "cl", text: "CL (decide propostas)" }));
-        const ok = el("button", { type: "button", class: "ed-btn pri", text: "Aprovar e enviar código" });
-        const no = el("button", { type: "button", class: "ed-btn", text: "Recusar" });
-        ok.addEventListener("click", async () => {
-          const ms = [...mins.querySelectorAll("input:checked")].map(x => x.value);
-          if (!ms.length && pap.value === "lider") { toast("Escolha pelo menos um ministério."); return; }
-          ok.disabled = true;
-          const { error: e2 } = await sb.rpc("goplan_cal_aprovar", { p_id: q.id, p_ministerios: ms, p_papel: pap.value });
-          if (e2) { ok.disabled = false; toast("Não foi possível aprovar."); return; }
-          const { error: e3 } = await sb.auth.signInWithOtp({ email: q.email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
-          toast(e3 ? "Aprovado. O email com o código não saiu; o líder pode pedir o código na página." : `Aprovado. Enviámos o código e o link para ${q.email}.`);
-          clPanel("ped");
-        });
-        no.addEventListener("click", async () => { no.disabled = true; const { error: e2 } = await sb.from("goplan_calendar_pedidos").update({ estado: "recusado" }).eq("id", q.id); if (e2) { no.disabled = false; toast("Não foi possível guardar."); return; } clPanel("ped"); });
-        body.append(el("div", { class: "ed-card" }, el("div", { class: "ed-cw" }, el("b", { text: q.nome }), " · " + q.email), q.mensagem ? el("div", { class: "ed-cs", text: q.mensagem }) : null,
-          el("div", { class: "ed-cs", text: "Pedido a " + new Date(q.criado_em).toLocaleDateString("pt-PT") }), el("fieldset", { class: "ed-fs" }, el("legend", { text: "Ministérios" }), mins), field("Papel", pap), el("div", { class: "ed-row" }, ok, no)));
       }
     } else {
       const { data, error } = await sb.from("goplan_calendar_lideres").select("*").order("nome");
@@ -386,7 +331,7 @@
     const mine = el("button", { type: "button", class: "ed-btn", text: `As minhas propostas${ED.mine.filter(p => p.estado === "pendente").length ? " (" + ED.mine.filter(p => p.estado === "pendente").length + ")" : ""}` });
     mine.addEventListener("click", minePanel);
     bar.append(el("span", { class: "ed-who", text: ED.lider.nome || ED.me.email }), el("label", { class: "ed-sel" }, el("span", { text: "A editar:" }), sel), mine);
-    if (isCL()) { const cl = el("button", { type: "button", class: "ed-btn", text: "CL: propostas e pedidos" }); cl.addEventListener("click", () => clPanel()); bar.append(cl); }
+    if (isCL()) { const cl = el("button", { type: "button", class: "ed-btn", text: "CL: propostas" }); cl.addEventListener("click", () => clPanel()); bar.append(cl); }
     const out = el("button", { type: "button", class: "ed-link", text: "Sair" }); out.addEventListener("click", async () => { await sb.auth.signOut(); });
     bar.append(out);
     bar.append(el("div", { class: "ed-hint", text: "Toque em «+ Propor data nesta semana» ou em «Mudar data» / «Retirar» num evento. Na linha do tempo, toque num dia vazio da linha do ministério." }));
